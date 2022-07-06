@@ -80,7 +80,7 @@
 
 #define ST_TOF_IOCTL_TRANSFER _IOWR('a', 0x1, void *)
 
-#define LOG printf
+#define LOG(...)
 
 #ifndef STMVL53L5CX_KERNEL
 static uint8_t i2c_buffer[VL53L5CX_COMMS_CHUNK_SIZE];
