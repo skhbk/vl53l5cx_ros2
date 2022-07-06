@@ -412,7 +412,7 @@ union Block_header {
 		uint32_t type : 4;
 		uint32_t size : 12;
 		uint32_t idx : 16;
-	};
+	} field;
 };
 
 uint8_t vl53l5cx_is_alive(

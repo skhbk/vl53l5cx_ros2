@@ -601,24 +601,24 @@ uint8_t vl53l5cx_start_ranging(
 		}
 
 		bh_ptr = (union Block_header *)&(output[i]);
-		if (((uint8_t)bh_ptr->type >= (uint8_t)0x1) 
-                    && ((uint8_t)bh_ptr->type < (uint8_t)0x0d))
+		if (((uint8_t)bh_ptr->field.type >= (uint8_t)0x1) 
+                    && ((uint8_t)bh_ptr->field.type < (uint8_t)0x0d))
 		{
-			if ((bh_ptr->idx >= (uint16_t)0x54d0) 
-                            && (bh_ptr->idx < (uint16_t)(0x54d0 + 960)))
+			if ((bh_ptr->field.idx >= (uint16_t)0x54d0) 
+                            && (bh_ptr->field.idx < (uint16_t)(0x54d0 + 960)))
 			{
-				bh_ptr->size = resolution;
+				bh_ptr->field.size = resolution;
 			}
 			else
 			{
-				bh_ptr->size = (uint16_t)((uint16_t)resolution
+				bh_ptr->field.size = (uint16_t)((uint16_t)resolution
                                   * (uint16_t)VL53L5CX_NB_TARGET_PER_ZONE);
 			}
-			p_dev->data_read_size += bh_ptr->type * bh_ptr->size;
+			p_dev->data_read_size += bh_ptr->field.type * bh_ptr->field.size;
 		}
 		else
 		{
-			p_dev->data_read_size += bh_ptr->size;
+			p_dev->data_read_size += bh_ptr->field.size;
 		}
 		p_dev->data_read_size += (uint32_t)4;
 	}
@@ -771,17 +771,17 @@ uint8_t vl53l5cx_get_ranging_data(
              < (uint32_t)p_dev->data_read_size; i+=(uint32_t)4)
 	{
 		bh_ptr = (union Block_header *)&(p_dev->temp_buffer[i]);
-		if ((bh_ptr->type > (uint32_t)0x1) 
-                    && (bh_ptr->type < (uint32_t)0xd))
+		if ((bh_ptr->field.type > (uint32_t)0x1) 
+                    && (bh_ptr->field.type < (uint32_t)0xd))
 		{
-			msize = bh_ptr->type * bh_ptr->size;
+			msize = bh_ptr->field.type * bh_ptr->field.size;
 		}
 		else
 		{
-			msize = bh_ptr->size;
+			msize = bh_ptr->field.size;
 		}
 
-		switch(bh_ptr->idx){
+		switch(bh_ptr->field.idx){
 			case VL53L5CX_METADATA_IDX:
 				p_results->silicon_temp_degc =
 						(int8_t)p_dev->temp_buffer[i + (uint32_t)12];

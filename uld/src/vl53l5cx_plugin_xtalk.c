@@ -150,26 +150,26 @@ static uint8_t _vl53l5cx_program_output_config(
 		}
 
 		bh_ptr = (union Block_header *)&(output[i]);
-		if (((uint8_t)bh_ptr->type >= (uint8_t)0x1) 
-                    && ((uint8_t)bh_ptr->type < (uint8_t)0x0d))
+		if (((uint8_t)bh_ptr->field.type >= (uint8_t)0x1) 
+                    && ((uint8_t)bh_ptr->field.type < (uint8_t)0x0d))
 		{
-			if ((bh_ptr->idx >= (uint16_t)0x54d0) 
-                            && (bh_ptr->idx < (uint16_t)(0x54d0 + 960)))
+			if ((bh_ptr->field.idx >= (uint16_t)0x54d0) 
+                            && (bh_ptr->field.idx < (uint16_t)(0x54d0 + 960)))
 			{
-				bh_ptr->size = resolution;
+				bh_ptr->field.size = resolution;
 			}	
 			else 
 			{
-				bh_ptr->size = (uint8_t)(resolution 
+				bh_ptr->field.size = (uint8_t)(resolution 
                                   * (uint8_t)VL53L5CX_NB_TARGET_PER_ZONE);
 			}
 
                         
-			p_dev->data_read_size += bh_ptr->type * bh_ptr->size;
+			p_dev->data_read_size += bh_ptr->field.type * bh_ptr->field.size;
 		}
 		else
 		{
-			p_dev->data_read_size += bh_ptr->size;
+			p_dev->data_read_size += bh_ptr->field.size;
 		}
 
 		p_dev->data_read_size += (uint32_t)4;
