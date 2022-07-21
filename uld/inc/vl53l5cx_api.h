@@ -75,7 +75,7 @@
  * @brief Current driver version.
  */
 
-#define VL53L5CX_API_REVISION			"VL53L5CX_1.3.3"
+#define VL53L5CX_API_REVISION			"VL53L5CX_1.3.4"
 
 /**
  * @brief Default I2C address of VL53L5CX sensor. Can be changed using function
@@ -131,6 +131,7 @@
 #define VL53L5CX_STATUS_OK			((uint8_t) 0U)
 #define VL53L5CX_STATUS_TIMEOUT_ERROR		((uint8_t) 1U)
 #define VL53L5CX_STATUS_CORRUPTED_FRAME		((uint8_t) 2U)
+#define VL53L5CX_STATUS_CRC_CSUM_FAILED		((uint8_t) 3U)
 #define VL53L5CX_MCU_ERROR			((uint8_t) 66U)
 #define VL53L5CX_STATUS_INVALID_PARAM		((uint8_t) 127U)
 #define VL53L5CX_STATUS_ERROR			((uint8_t) 255U)
@@ -209,6 +210,7 @@
 #define VL53L5CX_DCI_DSS_CONFIG			((uint16_t)0xAD38U)
 #define VL53L5CX_DCI_TARGET_ORDER		((uint16_t)0xAE64U)
 #define VL53L5CX_DCI_SHARPENER			((uint16_t)0xAED8U)
+#define VL53L5CX_DCI_INTERNAL_CP		((uint16_t)0xB39CU)
 #define VL53L5CX_DCI_MOTION_DETECTOR_CFG	((uint16_t)0xBFACU)
 #define VL53L5CX_DCI_SINGLE_RANGE		((uint16_t)0xCD5CU)
 #define VL53L5CX_DCI_OUTPUT_CONFIG		((uint16_t)0xCD60U)

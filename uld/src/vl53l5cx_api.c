@@ -719,7 +719,7 @@ uint8_t vl53l5cx_check_data_ready(
 		VL53L5CX_Configuration		*p_dev,
 		uint8_t				*p_isReady)
 {
-	uint8_t tmp, status = VL53L5CX_STATUS_OK;
+	uint8_t status = VL53L5CX_STATUS_OK;
 
 	status |= RdMulti(&(p_dev->platform), 0x0, p_dev->temp_buffer, 4);
 
@@ -740,11 +740,6 @@ uint8_t vl53l5cx_check_data_ready(
         	status |= p_dev->temp_buffer[2];	/* Return GO2 error status */
         }
 
-		*p_isReady = 0;
-	}
-
-	status |= RdByte(&(p_dev->platform), 0x6, &tmp);
-	if((tmp & (uint8_t)0x20) != (uint8_t)0x0){
 		*p_isReady = 0;
 	}
 
@@ -1159,36 +1154,6 @@ uint8_t vl53l5cx_get_ranging_mode(
 	return status;
 }
 
-uint8_t vl53l5cx_enable_internal_cp(VL53L5CX_Configuration *p_dev)
-{
-	uint8_t status = VL53L5CX_STATUS_OK;
-	uint8_t vcsel_bootup_fsm = 1;
-	uint8_t analog_dynamic_pad_0 = 0;
-
-	status |= vl53l5cx_dci_replace_data(p_dev, p_dev->temp_buffer,
-		0xB39C, 16, (uint8_t*)&vcsel_bootup_fsm, 1, 0x0A);
-
-	status |= vl53l5cx_dci_replace_data(p_dev, p_dev->temp_buffer,
-		0xB39C, 16, (uint8_t*)&analog_dynamic_pad_0, 1, 0x0E);
-
-	return status;
-}
-
-uint8_t vl53l5cx_disable_internal_cp(VL53L5CX_Configuration *p_dev)
-{
-	uint8_t status = VL53L5CX_STATUS_OK;
-	uint8_t vcsel_bootup_fsm = 0;
-	uint8_t analog_dynamic_pad_0 = 1;
-
-	status |= vl53l5cx_dci_replace_data(p_dev, p_dev->temp_buffer,
-		0xB39C, 16, (uint8_t*)&vcsel_bootup_fsm, 1, 0x0A);
-
-	status |= vl53l5cx_dci_replace_data(p_dev, p_dev->temp_buffer,
-		0xB39C, 16, (uint8_t*)&analog_dynamic_pad_0, 1, 0x0E);
-
-	return status;
-}
-
 uint8_t vl53l5cx_set_ranging_mode(
 		VL53L5CX_Configuration		*p_dev,
 		uint8_t				ranging_mode)
@@ -1224,6 +1189,42 @@ uint8_t vl53l5cx_set_ranging_mode(
 	status |= vl53l5cx_dci_write_data(p_dev, (uint8_t*)&single_range,
 			VL53L5CX_DCI_SINGLE_RANGE, 
                         (uint16_t)sizeof(single_range));
+
+	return status;
+}
+
+uint8_t vl53l5cx_enable_internal_cp(
+		VL53L5CX_Configuration *p_dev)
+{
+	uint8_t status = VL53L5CX_STATUS_OK;
+	uint8_t vcsel_bootup_fsm = 1;
+	uint8_t analog_dynamic_pad_0 = 0;
+
+	status |= vl53l5cx_dci_replace_data(p_dev, p_dev->temp_buffer,
+			VL53L5CX_DCI_INTERNAL_CP, 16,
+			(uint8_t*)&vcsel_bootup_fsm, 1, 0x0A);
+
+	status |= vl53l5cx_dci_replace_data(p_dev, p_dev->temp_buffer,
+			VL53L5CX_DCI_INTERNAL_CP, 16,
+			(uint8_t*)&analog_dynamic_pad_0, 1, 0x0E);
+
+	return status;
+}
+
+uint8_t vl53l5cx_disable_internal_cp(
+		VL53L5CX_Configuration *p_dev)
+{
+	uint8_t status = VL53L5CX_STATUS_OK;
+	uint8_t vcsel_bootup_fsm = 0;
+	uint8_t analog_dynamic_pad_0 = 1;
+
+	status |= vl53l5cx_dci_replace_data(p_dev, p_dev->temp_buffer,
+			VL53L5CX_DCI_INTERNAL_CP, 16,
+			(uint8_t*)&vcsel_bootup_fsm, 1, 0x0A);
+
+	status |= vl53l5cx_dci_replace_data(p_dev, p_dev->temp_buffer,
+			VL53L5CX_DCI_INTERNAL_CP, 16,
+			(uint8_t*)&analog_dynamic_pad_0, 1, 0x0E);
 
 	return status;
 }
