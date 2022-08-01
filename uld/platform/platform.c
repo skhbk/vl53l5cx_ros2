@@ -70,9 +70,9 @@
 #include "platform.h"
 #include "types.h"
 
-#define VL53L5CX_ERROR_GPIO_SET_FAIL -1
-#define VL53L5CX_COMMS_ERROR -2
-#define VL53L5CX_ERROR_TIME_OUT -3
+#define VL53L5CX_ERROR_GPIO_SET_FAIL 1
+#define VL53L5CX_COMMS_ERROR 2
+#define VL53L5CX_ERROR_TIME_OUT 3
 
 #define SUPPRESS_UNUSED_WARNING(x) ((void)(x))
 
