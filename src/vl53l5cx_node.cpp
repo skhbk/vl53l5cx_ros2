@@ -16,7 +16,9 @@
 #include "vl53l5cx/vl53l5cx_node.hpp"
 
 using namespace std::chrono_literals;
+using sensor_msgs::msg::CameraInfo;
 using sensor_msgs::msg::Image;
+using std_msgs::msg::Header;
 using std_srvs::srv::Empty;
 namespace encodings = sensor_msgs::image_encodings;
 
@@ -87,7 +89,10 @@ VL53L5CXNode::VL53L5CXNode(const std::string & node_name) : Node(node_name)
     sensors_.emplace_back(builder.build());
 
     // Create publishers
-    pubs_distance_[id] = this->create_publisher<Image>("~/" + id.get_name() + "/image", 10);
+    pubs_distance_[id] =
+      this->create_publisher<Image>("~/" + id.get_name() + "/image", rclcpp::SensorDataQoS());
+    pubs_camera_info_[id] = this->create_publisher<CameraInfo>(
+      "~/" + id.get_name() + "/camera_info", rclcpp::SensorDataQoS());
   }
   this->initialize();
   this->apply_parameters();
@@ -200,8 +205,17 @@ void VL53L5CXNode::start_ranging()
   timer_ = create_wall_timer(3ms, [this] {
     for (auto & e : sensors_) {
       if (e->check_data_ready()) {
-        const auto msg = this->convert_to_image_msg(e->get_distance());
-        pubs_distance_.at(e->id)->publish(msg);
+        Header header;
+        header.frame_id = e->id.get_name();
+        header.stamp = this->now();
+
+        auto image = this->convert_to_image_msg(e->get_distance());
+        auto camera_info = this->get_camera_info();
+        image.header = header;
+        camera_info.header = header;
+
+        pubs_distance_.at(e->id)->publish(image);
+        pubs_camera_info_.at(e->id)->publish(camera_info);
       };
     }
   });
@@ -229,6 +243,25 @@ void VL53L5CXNode::stop_ranging()
     this->apply_parameters();
     have_parameters_changed_ = false;
   }
+}
+
+CameraInfo VL53L5CXNode::get_camera_info() const
+{
+  CameraInfo msg;
+
+  msg.height = resolution_;
+  msg.width = resolution_;
+
+  msg.distortion_model = "plumb_bob";
+  msg.d = {0, 0, 0, 0, 0};  // No distortion
+
+  const double c = (msg.width - 1) / 2.;               // Optical center
+  const double f = c / std::tan(45 * M_PI / 180 / 2);  // Focal length
+  msg.k = {f, 0, c, 0, f, c, 0, 0, 1};
+  msg.p = {f, 0, c, 0, 0, f, c, 0, 0, 0, 1, 0};
+  msg.r = {1, 0, 0, 0, 1, 0, 0, 0, 1};
+
+  return msg;
 }
 
 template <class T>

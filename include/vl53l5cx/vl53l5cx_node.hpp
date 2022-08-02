@@ -16,6 +16,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/image_encodings.hpp"
+#include "sensor_msgs/msg/camera_info.hpp"
 #include "sensor_msgs/msg/image.hpp"
 #include "std_srvs/srv/empty.hpp"
 #include "vl53l5cx/vl53l5cx.hpp"
@@ -25,6 +26,7 @@ namespace vl53l5cx
 class VL53L5CXNode : public rclcpp::Node
 {
   std::map<ID, rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr> pubs_distance_;
+  std::map<ID, rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr> pubs_camera_info_;
 
   std::vector<rclcpp::Service<std_srvs::srv::Empty>::SharedPtr> services_;
 
@@ -48,6 +50,7 @@ public:
 
 private:
   void configure_parameters();
+  sensor_msgs::msg::CameraInfo get_camera_info() const;
 
   template <class T>
   sensor_msgs::msg::Image convert_to_image_msg(const std::vector<T> & src) const;
