@@ -1,4 +1,3 @@
-#include "vl53l5cx_pi/bcm2835.hpp"
 #include "vl53l5cx_pi/types.hpp"
 #include "vl53l5cx_pi/vl53l5cx_node.hpp"
 
@@ -64,15 +63,13 @@ VL53L5CXNode::VL53L5CXNode(const std::string & node_name) : Node(node_name)
     RCLCPP_INFO(this->get_logger(), "INT enabled");
   }
 
-  auto gpio_handler = std::make_shared<BCM2835>();
-
   for (std::size_t i = 0; i < n_devices; ++i) {
     const auto id = ID::get();
 
     // Construct sensors
-    VL53L5CXBuilder builder{id, static_cast<uint8_t>(addresses_[i]), gpio_handler};
-    if (!gpios_lpn_.empty()) builder.LPn = gpios_lpn_[i];
-    if (!gpios_int_.empty()) builder.INT = gpios_int_[i];
+    VL53L5CXBuilder builder{id, static_cast<uint8_t>(addresses_[i])};
+    if (!gpios_lpn_.empty()) builder.LPn = std::make_shared<GPIO>(gpios_lpn_[i]);
+    if (!gpios_int_.empty()) builder.INT = std::make_shared<GPIO>(gpios_int_[i]);
     sensors_.emplace_back(builder.build());
 
     // Create publishers
@@ -185,11 +182,8 @@ void VL53L5CXNode::start_ranging()
     e->start_ranging();
   }
 
-  // Avoid frequent polling on I2C
-  const auto period = gpios_int_.empty() ? 3ms : 100us;
-
   // Set polling
-  timer_ = create_wall_timer(period, [this] {
+  timer_ = create_wall_timer(3ms, [this] {
     for (auto & e : sensors_) {
       if (e->check_data_ready()) {
         const auto msg = this->convert_to_image_msg(e->get_distance());

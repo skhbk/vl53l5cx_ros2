@@ -19,14 +19,13 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
-find_package(bcm2835 REQUIRED)
 
 add_subdirectory(uld)
 
 add_executable(ranging src/main.cpp src/vl53l5cx_node.cpp src/vl53l5cx.cpp
-                       src/bcm2835.cpp)
+                       src/gpio.cpp)
 target_include_directories(ranging PUBLIC ${PROJECT_SOURCE_DIR}/include)
-target_link_libraries(ranging uld bcm2835)
+target_link_libraries(ranging uld gpiodcxx)
 ament_target_dependencies(ranging rclcpp sensor_msgs std_srvs)
 
 install(TARGETS ranging DESTINATION lib/${PROJECT_NAME})

@@ -1,39 +1,32 @@
 #pragma once
 
-#include <cstdint>  // uint8_t
-#include <memory>
+#include <gpiod.hpp>
 
 namespace vl53l5cx
 {
 class GPIO
 {
+public:
+  enum class RequestType { IN, OUT, FALLING_EDGE };
+  enum class Value { LOW, HIGH };
+
+private:
   uint8_t pin_;
-  bool is_empty_;
+  gpiod::line line_;
 
 public:
-  GPIO() : is_empty_(true) {}
-  GPIO & operator=(uint8_t pin)
-  {
-    pin_ = pin;
-    is_empty_ = false;
-    return *this;
-  }
-  explicit operator bool() const { return !is_empty_; }
-  uint8_t pin() const { return pin_; }
-};
+  explicit GPIO(uint8_t pin);
+  ~GPIO() noexcept;
 
-class GPIOHandler : public std::enable_shared_from_this<GPIOHandler>
-{
-public:
-  GPIOHandler() = default;
-  virtual ~GPIOHandler() = default;
+  uint8_t pin() const noexcept { return pin_; }
 
-  virtual void set_input(GPIO gpio) = 0;
-  virtual void set_output(GPIO gpio) = 0;
-  virtual void pullup(GPIO gpio) = 0;
-  virtual void write(GPIO gpio, bool on) = 0;
-  virtual void enable_falling_edge_detection(GPIO gpio) = 0;
-  virtual void disable_falling_edge_detection(GPIO gpio) = 0;
-  virtual bool check_event(GPIO gpio) = 0;
+  void set_request_type(RequestType request_type) const;
+  void set_value(Value value) const;
+  bool wait_for_event(const std::chrono::milliseconds & timeout) const;
+
+private:
+  GPIO() = delete;
+  GPIO(const GPIO &) = delete;
+  GPIO & operator=(const GPIO &) = delete;
 };
 }  // namespace vl53l5cx
