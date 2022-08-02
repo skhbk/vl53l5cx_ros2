@@ -2,7 +2,7 @@
 #include <iostream>  // std::cerr
 #include <thread>    // std::this_thread
 
-#include "vl53l5cx_pi/vl53l5cx.hpp"
+#include "vl53l5cx/vl53l5cx.hpp"
 
 extern "C" {
 #include "vl53l5cx_api.h"
@@ -33,15 +33,12 @@ VL53L5CX::VL53L5CX(const VL53L5CXBuilder & builder)
   id(builder.id)
 {
   // Initialize GPIO
-  gpio_handler_ = builder.gpio_handler;
   if (LPn) {
-    gpio_handler_->set_output(LPn);
-    gpio_handler_->pullup(LPn);
+    LPn->set_request_type(GPIO::RequestType::OUT);
     this->enable_comms();
   }
   if (INT) {
-    gpio_handler_->set_input(INT);
-    gpio_handler_->pullup(INT);
+    INT->set_request_type(GPIO::RequestType::FALLING_EDGE);
   }
 }
 
@@ -75,7 +72,6 @@ void VL53L5CX::initialize()
   if (status) throw DeviceError("Failed to set I2C address", id);
 
   status |= vl53l5cx_init(device_->config());
-  // if (status) status = vl53l5cx_init(device_->config());  // Try again
   if (status) throw DeviceError("Failed to initialize the device: " + std::to_string(status), id);
 
   device_status_ |= INITIALIZED;
@@ -105,8 +101,6 @@ void VL53L5CX::start_ranging()
   auto status = vl53l5cx_start_ranging(device_->config());
   if (status) throw DeviceError("Starting ranging failed", id);
 
-  if (INT) this->enable_interrupt_detection();
-
   device_status_ |= RANGING;
 }
 
@@ -118,8 +112,6 @@ void VL53L5CX::stop_ranging()
   auto status = vl53l5cx_stop_ranging(device_->config());
   if (status) throw DeviceError("Failed to stop ranging", id);
 
-  if (INT) this->disable_interrupt_detection();
-
   device_status_ &= ~RANGING;
 }
 
@@ -128,38 +120,34 @@ bool VL53L5CX::check_data_ready()
   if (!this->is_initialized()) throw std::runtime_error("Initialize first");
   if (!this->is_ranging()) throw std::runtime_error("Not in ranging");
 
-  bool is_ready;
-  if (INT)
-    is_ready = gpio_handler_->check_event(INT);
-  else {
-    uint8_t ready = 0;
-    auto status = vl53l5cx_check_data_ready(device_->config(), &ready);
-    if (status) throw DeviceError("Failed to check data-ready", id);
-    is_ready = ready ? true : false;
-  }
+  uint8_t ready = 0;
+  auto status = vl53l5cx_check_data_ready(device_->config(), &ready);
+  if (status) throw DeviceError("Failed to check data-ready", id);
+  bool is_ready = ready ? true : false;
 
   if (is_ready) this->get_ranging_data();
 
   return is_ready;
 }
 
-void VL53L5CX::enable_interrupt_detection() const
+bool VL53L5CX::wait_for_interrupt(const std::chrono::milliseconds & timeout)
 {
-  gpio_handler_->enable_falling_edge_detection(INT);
-}
-
-void VL53L5CX::disable_interrupt_detection() const
-{
-  gpio_handler_->disable_falling_edge_detection(INT);
+  const auto is_ready = INT->wait_for_event(timeout);
+  if (is_ready) this->get_ranging_data();
+  return is_ready;
 }
 
 void VL53L5CX::disable_comms() const
 {
-  gpio_handler_->write(LPn, false);
+  LPn->set_value(GPIO::Value::LOW);
   std::this_thread::sleep_for(10ms);
 }
 
-void VL53L5CX::enable_comms() const { gpio_handler_->write(LPn, true); }
+void VL53L5CX::enable_comms() const
+{
+  LPn->set_value(GPIO::Value::HIGH);
+  std::this_thread::sleep_for(10ms);
+}
 
 void VL53L5CX::get_ranging_data()
 {

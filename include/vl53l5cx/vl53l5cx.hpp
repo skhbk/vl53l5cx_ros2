@@ -4,9 +4,9 @@
 #include <string>
 #include <vector>
 
-#include "vl53l5cx_pi/builder.hpp"
-#include "vl53l5cx_pi/gpio.hpp"
-#include "vl53l5cx_pi/types.hpp"
+#include "vl53l5cx/builder.hpp"
+#include "vl53l5cx/gpio.hpp"
+#include "vl53l5cx/types.hpp"
 
 namespace vl53l5cx
 {
@@ -19,11 +19,10 @@ class VL53L5CX
 
   enum DeviceStatus { RANGING = 1 << 0, INITIALIZED = 1 << 1 };
   uint8_t device_status_ = 0;
-  std::shared_ptr<GPIOHandler> gpio_handler_;
 
   uint8_t address_;
-  GPIO LPn;
-  GPIO INT;
+  std::shared_ptr<GPIO> LPn;
+  std::shared_ptr<GPIO> INT;
   std::vector<float> distances_;
 
   uint8_t resolution_, frequency_, ranging_mode_;
@@ -39,6 +38,7 @@ public:
   void start_ranging();
   void stop_ranging();
   bool check_data_ready();
+  bool wait_for_interrupt(const std::chrono::milliseconds & timeout);
   void disable_comms() const;
   void enable_comms() const;
 
@@ -54,8 +54,6 @@ public:
 
 private:
   void get_ranging_data();
-  void enable_interrupt_detection() const;
-  void disable_interrupt_detection() const;
 };
 
 }  // namespace vl53l5cx
