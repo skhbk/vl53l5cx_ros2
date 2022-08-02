@@ -2,7 +2,7 @@
 #include <iostream>  // std::cerr
 #include <thread>    // std::this_thread
 
-#include "vl53l5cx_pi/vl53l5cx.hpp"
+#include "vl53l5cx/vl53l5cx.hpp"
 
 extern "C" {
 #include "vl53l5cx_api.h"

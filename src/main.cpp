@@ -1,4 +1,4 @@
-#include "vl53l5cx_pi/vl53l5cx_node.hpp"
+#include "vl53l5cx/vl53l5cx_node.hpp"
 
 int main(int argc, char * argv[])
 {

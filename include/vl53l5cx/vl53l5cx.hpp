@@ -4,9 +4,9 @@
 #include <string>
 #include <vector>
 
-#include "vl53l5cx_pi/builder.hpp"
-#include "vl53l5cx_pi/gpio.hpp"
-#include "vl53l5cx_pi/types.hpp"
+#include "vl53l5cx/builder.hpp"
+#include "vl53l5cx/gpio.hpp"
+#include "vl53l5cx/types.hpp"
 
 namespace vl53l5cx
 {

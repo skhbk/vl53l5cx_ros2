@@ -4,7 +4,7 @@
 #include "sensor_msgs/image_encodings.hpp"
 #include "sensor_msgs/msg/image.hpp"
 #include "std_srvs/srv/empty.hpp"
-#include "vl53l5cx_pi/vl53l5cx.hpp"
+#include "vl53l5cx/vl53l5cx.hpp"
 
 namespace vl53l5cx
 {

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "vl53l5cx_pi/gpio.hpp"
-#include "vl53l5cx_pi/types.hpp"
-#include "vl53l5cx_pi/vl53l5cx.hpp"
+#include "vl53l5cx/gpio.hpp"
+#include "vl53l5cx/types.hpp"
+#include "vl53l5cx/vl53l5cx.hpp"
 
 namespace vl53l5cx
 {

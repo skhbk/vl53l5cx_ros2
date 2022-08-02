@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(vl53l5cx_pi)
+project(vl53l5cx)
 
 if(NOT CMAKE_C_STANDARD)
   set(CMAKE_C_STANDARD 99)
