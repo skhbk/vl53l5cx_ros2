@@ -5,7 +5,7 @@
   <version>0.0.0</version>
   <description>VL53L5CX driver for Linux.</description>
   <maintainer email="sakai_hibiki@stu.kanazawa-u.ac.jp">Sakai Hibiki</maintainer>
-  <license>GNU General Public License v3.0</license>
+  <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
