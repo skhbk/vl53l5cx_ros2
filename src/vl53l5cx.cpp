@@ -12,6 +12,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
+#include <cassert>
 #include <chrono>    // std::chrono_literals
 #include <iostream>  // std::cerr
 #include <thread>    // std::this_thread
@@ -39,19 +40,16 @@ public:
   VL53L5CX_ResultsData * results() { return &results_; }
 };
 
-VL53L5CX::VL53L5CX(const VL53L5CXBuilder & builder)
-: device_(std::make_unique<DeviceData>()),
-  address_(builder.address),
-  LPn(builder.LPn),
-  INT(builder.INT),
-  id(builder.id)
+VL53L5CX::VL53L5CX(Config config) : device_(std::make_unique<DeviceData>()), config_(config)
 {
   // Initialize GPIO
-  if (LPn) {
+  if (config_.lpn_pin != PinNaN) {
+    LPn = std::make_unique<GPIO>(config_.lpn_pin);
     LPn->set_request_type(GPIO::RequestType::OUT);
     this->enable_comms();
   }
-  if (INT) {
+  if (config_.int_pin != PinNaN) {
+    INT = std::make_unique<GPIO>(config_.int_pin);
     INT->set_request_type(GPIO::RequestType::FALLING_EDGE);
   }
 }
@@ -78,33 +76,54 @@ void VL53L5CX::initialize()
 
   if (!this->is_alive()) {
     // Try with the given address
-    device_->platform()->address = address_ << 1;
-    if (!this->is_alive()) throw DeviceError("Device not detected", id);
+    device_->platform()->address = config_.address << 1;
+    if (!this->is_alive()) throw DeviceError("Device not detected", config_.address);
   }
 
-  status |= vl53l5cx_set_i2c_address(device_->config(), address_ << 1);
-  if (status) throw DeviceError("Failed to set I2C address", id);
+  status |= vl53l5cx_set_i2c_address(device_->config(), config_.address << 1);
+  if (status) throw DeviceError("Failed to set I2C address", config_.address);
 
   status |= vl53l5cx_init(device_->config());
-  if (status) throw DeviceError("Failed to initialize the device: " + std::to_string(status), id);
+  if (status)
+    throw DeviceError(
+      "Failed to initialize the device: " + std::to_string(status), config_.address);
 
   device_status_ |= INITIALIZED;
+
+  this->set_config(config_);
 }
 
-void VL53L5CX::apply_parameters()
+void VL53L5CX::set_config(const Config & config)
 {
   if (!this->is_initialized()) throw std::runtime_error("Initialize first");
   if (this->is_ranging()) throw std::runtime_error("Stop ranging before applying parameters");
 
-  const uint8_t image_size = resolution_ * resolution_;
-  if (vl53l5cx_set_ranging_frequency_hz(device_->config(), frequency_))
-    throw std::runtime_error("Failed to set frequency");
+  config_.resolution = config.resolution;
+  config_.frequency = config.frequency;
+  config_.ranging_mode = config.ranging_mode;
+
+  const auto resolution = static_cast<uint8_t>(config_.resolution);
+  const uint8_t image_size = resolution * resolution;
   if (vl53l5cx_set_resolution(device_->config(), image_size))
     throw std::runtime_error("Failed to set resolution");
-  if (vl53l5cx_set_ranging_mode(device_->config(), ranging_mode_))
-    throw std::runtime_error("Failed to set ranging mode");
-
   distances_.resize(image_size);
+
+  if (vl53l5cx_set_ranging_frequency_hz(device_->config(), config_.frequency))
+    throw std::runtime_error("Failed to set frequency");
+
+  uint8_t ranging_mode;
+  switch (config_.ranging_mode) {
+    case RangingMode::CONTINUOUS:
+      ranging_mode = VL53L5CX_RANGING_MODE_CONTINUOUS;
+      break;
+    case RangingMode::AUTONOMOUS:
+      ranging_mode = VL53L5CX_RANGING_MODE_AUTONOMOUS;
+      break;
+    default:
+      assert(false);
+  }
+  if (vl53l5cx_set_ranging_mode(device_->config(), ranging_mode))
+    throw std::runtime_error("Failed to set ranging mode");
 }
 
 void VL53L5CX::start_ranging()
@@ -113,7 +132,7 @@ void VL53L5CX::start_ranging()
   if (this->is_ranging()) throw std::runtime_error("Already in ranging");
 
   auto status = vl53l5cx_start_ranging(device_->config());
-  if (status) throw DeviceError("Starting ranging failed", id);
+  if (status) throw DeviceError("Starting ranging failed", config_.address);
 
   device_status_ |= RANGING;
 }
@@ -124,7 +143,7 @@ void VL53L5CX::stop_ranging()
   if (!this->is_ranging()) throw std::runtime_error("Not in ranging");
 
   auto status = vl53l5cx_stop_ranging(device_->config());
-  if (status) throw DeviceError("Failed to stop ranging", id);
+  if (status) throw DeviceError("Failed to stop ranging", config_.address);
 
   device_status_ &= ~RANGING;
 }
@@ -136,7 +155,7 @@ bool VL53L5CX::check_data_ready()
 
   uint8_t ready = 0;
   auto status = vl53l5cx_check_data_ready(device_->config(), &ready);
-  if (status) throw DeviceError("Failed to check data-ready", id);
+  if (status) throw DeviceError("Failed to check data-ready", config_.address);
   bool is_ready = ready ? true : false;
 
   if (is_ready) this->get_ranging_data();
@@ -166,9 +185,11 @@ void VL53L5CX::enable_comms() const
 void VL53L5CX::get_ranging_data()
 {
   auto status = vl53l5cx_get_ranging_data(device_->config(), device_->results());
-  if (status) throw DeviceError("Failed to get ranging data: " + std::to_string(status), id);
+  if (status)
+    throw DeviceError("Failed to get ranging data: " + std::to_string(status), config_.address);
 
-  for (int i = 0; i < resolution_ * resolution_; ++i) {
+  const auto resolution = static_cast<uint8_t>(config_.resolution);
+  for (int i = 0; i < resolution * resolution; ++i) {
 #ifdef VL53L5CX_ENABLE_DISTANCE_MM
 #ifdef VL53L5CX_USE_RAW_FORMAT
     constexpr float gain = 1 / (4 * 1000.f);

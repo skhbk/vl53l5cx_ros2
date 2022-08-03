@@ -14,29 +14,27 @@
 
 #pragma once
 
+#include <sstream>
 #include <stdexcept>
 #include <string>
 
 namespace vl53l5cx
 {
-class ID
+using Address = uint8_t;
+using Frequency = uint8_t;
+using Pin = uint8_t;
+static constexpr Pin PinNaN = 255;
+enum class Resolution { X4 = 4, X8 = 8 };
+enum class RangingMode { CONTINUOUS, AUTONOMOUS };
+
+inline std::string get_hex(Address address)
 {
-  uint8_t id_;
+  std::stringstream ss;
+  ss << std::hex << static_cast<int>(address);
+  const auto hex = ss.str();
 
-private:
-  explicit ID(uint8_t id) : id_(id) {}
-
-public:
-  static ID get()
-  {
-    static uint8_t next = 0;
-    return ID{next++};
-  }
-  std::string get_name() const { return "sensor_" + std::to_string(id_); }
-
-  // For std::map
-  bool operator<(const ID & right) const { return id_ < right.id_; }
-};
+  return hex;
+}
 
 class CommsError : public std::runtime_error
 {
@@ -47,8 +45,8 @@ public:
 class DeviceError : public std::runtime_error
 {
 public:
-  explicit DeviceError(const std::string & message, const ID & id)
-  : runtime_error{message + " [" + id.get_name() + "]"}
+  explicit DeviceError(const std::string & message, const Address & address)
+  : runtime_error{message + " [0x" + get_hex(address) + "]"}
   {
   }
 };

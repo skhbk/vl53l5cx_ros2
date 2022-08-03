@@ -15,28 +15,22 @@
 #pragma once
 
 #include "rclcpp/rclcpp.hpp"
-#include "sensor_msgs/image_encodings.hpp"
-#include "sensor_msgs/msg/camera_info.hpp"
-#include "sensor_msgs/msg/image.hpp"
 #include "std_srvs/srv/empty.hpp"
+#include "vl53l5cx/ranging_helper.hpp"
 #include "vl53l5cx/vl53l5cx.hpp"
 
 namespace vl53l5cx
 {
+class RangingHelper;
+
 class VL53L5CXNode : public rclcpp::Node
 {
-  std::map<ID, rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr> pubs_distance_;
-  std::map<ID, rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr> pubs_camera_info_;
-
   std::vector<rclcpp::Service<std_srvs::srv::Empty>::SharedPtr> services_;
-
   OnSetParametersCallbackHandle::SharedPtr on_parameters_callback_handle_;
-  rclcpp::TimerBase::SharedPtr timer_;
 
-  std::vector<std::unique_ptr<VL53L5CX>> sensors_;
+  std::vector<std::shared_ptr<VL53L5CX>> sensors_;
 
-  std::vector<int64_t> addresses_, gpios_lpn_, gpios_int_;
-  uint8_t resolution_, frequency_, ranging_mode_;
+  std::unique_ptr<RangingHelper> ranging_helper_;
   bool have_parameters_changed_ = false;
 
 public:
@@ -48,12 +42,10 @@ public:
   void start_ranging();
   void stop_ranging();
 
-private:
-  void configure_parameters();
-  sensor_msgs::msg::CameraInfo get_camera_info() const;
+  std::string get_sensor_name(Address address) const;
 
-  template <class T>
-  sensor_msgs::msg::Image convert_to_image_msg(const std::vector<T> & src) const;
+private:
+  std::vector<VL53L5CX::Config> parse_parameters() const;
 };
 
 }  // namespace vl53l5cx
