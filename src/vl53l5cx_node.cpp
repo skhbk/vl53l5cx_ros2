@@ -12,15 +12,14 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#include "vl53l5cx/types.hpp"
 #include "vl53l5cx/vl53l5cx_node.hpp"
 
-using namespace std::chrono_literals;
-using sensor_msgs::msg::CameraInfo;
-using sensor_msgs::msg::Image;
-using std_msgs::msg::Header;
+#define DEFAULT_ADDRESS 0x29
+#define DEFAULT_RESOLUTION 4
+#define DEFAULT_FREQUENCY 1
+#define DEFAULT_RANGING_MODE 0
+
 using std_srvs::srv::Empty;
-namespace encodings = sensor_msgs::image_encodings;
 
 namespace vl53l5cx
 {
@@ -44,58 +43,36 @@ VL53L5CXNode::VL53L5CXNode(const std::string & node_name) : Node(node_name)
     d.type = rclcpp::PARAMETER_INTEGER_ARRAY;
     d.additional_constraints = "not 0x29";
     d.integer_range.emplace_back(get_integer_range(0x08, 0x77));
-    this->declare_parameter<std::vector<int64_t>>("address", {0x29}, d);
+    this->declare_parameter<std::vector<int64_t>>("address", {DEFAULT_ADDRESS}, d);
   }
   {  // GPIO
     rcl_interfaces::msg::ParameterDescriptor d;
     d.read_only = true;
     d.type = rclcpp::PARAMETER_INTEGER_ARRAY;
-    d.integer_range.emplace_back(get_integer_range(2, 27));
+    d.integer_range.emplace_back(get_integer_range(0, 254));
     auto d_lpn = d, d_int = d;
-    d_lpn.description = "LPn gpio pins";
-    d_int.description = "INT gpio pins";
-    this->declare_parameter<std::vector<int64_t>>("gpio_lpn", {}, d_lpn);
-    this->declare_parameter<std::vector<int64_t>>("gpio_int", {}, d_int);
+    d_lpn.description = "LPn GPIO pins";
+    d_int.description = "INT GPIO pins";
+    this->declare_parameter<std::vector<int64_t>>("lpn_pin", {}, d_lpn);
+    this->declare_parameter<std::vector<int64_t>>("int_pin", {}, d_int);
   }
-  this->declare_parameter("resolution", 4);
-  this->declare_parameter("frequency", 1);
-  this->declare_parameter("ranging_mode", 1);
+  this->declare_parameter("resolution", DEFAULT_RESOLUTION);
+  this->declare_parameter("frequency", DEFAULT_FREQUENCY);
+  this->declare_parameter("ranging_mode", DEFAULT_RANGING_MODE);
 
-  this->configure_parameters();
+  const auto configs = this->parse_parameters();
 
-  const auto n_devices = addresses_.size();
+  // Construct sensors
+  for (const auto & config : configs) sensors_.emplace_back(std::make_shared<VL53L5CX>(config));
 
-  // If connecting multiple sensors
-  if (n_devices > 1) {
-    if (gpios_lpn_.size() != n_devices)
-      throw std::invalid_argument(
-        "address and gpio_lpn must be the same size when connecting multiple sensors");
-  }
-
-  // If using INT (interrupt) pin
-  if (!gpios_int_.empty()) {
-    if (gpios_int_.size() != n_devices)
-      throw std::invalid_argument("address and gpio_int must be the same size when using INT");
-    RCLCPP_INFO(this->get_logger(), "INT enabled");
-  }
-
-  for (std::size_t i = 0; i < n_devices; ++i) {
-    const auto id = ID::get();
-
-    // Construct sensors
-    VL53L5CXBuilder builder{id, static_cast<uint8_t>(addresses_[i])};
-    if (!gpios_lpn_.empty()) builder.LPn = std::make_shared<GPIO>(gpios_lpn_[i]);
-    if (!gpios_int_.empty()) builder.INT = std::make_shared<GPIO>(gpios_int_[i]);
-    sensors_.emplace_back(builder.build());
-
-    // Create publishers
-    pubs_distance_[id] =
-      this->create_publisher<Image>("~/" + id.get_name() + "/image", rclcpp::SensorDataQoS());
-    pubs_camera_info_[id] = this->create_publisher<CameraInfo>(
-      "~/" + id.get_name() + "/camera_info", rclcpp::SensorDataQoS());
-  }
   this->initialize();
-  this->apply_parameters();
+
+  if (configs[0].int_pin != PinNaN) {
+    RCLCPP_INFO(this->get_logger(), "INT enabled");
+    throw std::runtime_error("Interrupt detection is not implemented");
+  } else {
+    ranging_helper_ = std::make_unique<PollI2C>(*this, sensors_);
+  }
 
   // Register callback for when parameters are set
   on_parameters_callback_handle_ =
@@ -128,14 +105,9 @@ void VL53L5CXNode::initialize()
 
     for (auto & e : sensors_) {
       e->enable_comms();
-
-      std::stringstream ss;
-      ss << "0x" << std::hex << static_cast<int>(e->get_address());
-      const auto hex_address = ss.str();
-      RCLCPP_INFO(this->get_logger(), "Initializing " + e->id.get_name() + " at " + hex_address);
-
+      RCLCPP_INFO(
+        this->get_logger(), "Initializing device at 0x" + get_hex(e->get_config().address));
       e->initialize();
-
       e->disable_comms();
     }
 
@@ -158,84 +130,105 @@ void VL53L5CXNode::apply_parameters()
     return;
   }
 
-  this->configure_parameters();
-
-  for (auto & e : sensors_) {
-    e->set_resolution(resolution_);
-    e->set_frequency(frequency_);
-    e->set_ranging_mode(ranging_mode_);
-    e->apply_parameters();
+  const auto configs = this->parse_parameters();
+  for (std::size_t i = 0; i < sensors_.size(); ++i) {
+    sensors_[i]->set_config(configs[i]);
   }
 
   RCLCPP_INFO(this->get_logger(), "Applied parameters");
 }
 
-void VL53L5CXNode::configure_parameters()
+std::vector<VL53L5CX::Config> VL53L5CXNode::parse_parameters() const
 {
-  this->get_parameter("address", addresses_);
-  this->get_parameter("gpio_lpn", gpios_lpn_);
-  this->get_parameter("gpio_int", gpios_int_);
-  this->get_parameter("resolution", resolution_);
-  this->get_parameter("frequency", frequency_);
-  this->get_parameter("ranging_mode", ranging_mode_);
+  std::vector<int64_t> addresses, lpn_pins, int_pins;
+  uint8_t resolution, frequency, ranging_mode;
+  this->get_parameter("address", addresses);
+  this->get_parameter("lpn_pin", lpn_pins);
+  this->get_parameter("int_pin", int_pins);
+  this->get_parameter("resolution", resolution);
+  this->get_parameter("ranging_mode", ranging_mode);
+  this->get_parameter("frequency", frequency);
+
+  const auto n_devices = addresses.size();
+
+  // If connecting multiple sensors
+  if (n_devices > 1) {
+    if (lpn_pins.size() != n_devices)
+      throw std::invalid_argument(
+        "address and lpn_pin must be the same size when connecting multiple sensors");
+  }
+
+  // If using INT (interrupt) pin
+  if (!int_pins.empty()) {
+    if (int_pins.size() != n_devices)
+      throw std::invalid_argument("address and int_pin must be the same size when using INT");
+  }
+
+  Resolution resolution_parsed;
+  if (resolution == 4)
+    resolution_parsed = Resolution::X4;
+  else if (resolution == 8)
+    resolution_parsed = Resolution::X8;
+  else
+    throw std::invalid_argument("resolution must be 4 or 8");
+
+  RangingMode ranging_mode_parsed;
+  if (ranging_mode == 0)
+    ranging_mode_parsed = RangingMode::CONTINUOUS;
+  else
+    ranging_mode_parsed = RangingMode::AUTONOMOUS;
+
+  std::vector<VL53L5CX::Config> configs(n_devices);
+  for (std::size_t i = 0; i < n_devices; ++i) {
+    configs[i].address = static_cast<uint8_t>(addresses[i]);
+    if (!lpn_pins.empty()) configs[i].lpn_pin = lpn_pins[i];
+    if (!int_pins.empty()) configs[i].int_pin = int_pins[i];
+    configs[i].resolution = resolution_parsed;
+    configs[i].ranging_mode = ranging_mode_parsed;
+    configs[i].frequency = static_cast<uint8_t>(frequency);
+  }
+
+  return configs;
 }
 
 void VL53L5CXNode::start_ranging()
 {
+  if (sensors_[0]->is_ranging()) {
+    RCLCPP_INFO(this->get_logger(), "Already ranging");
+    return;
+  }
+
   if (have_parameters_changed_) {
     this->apply_parameters();
     have_parameters_changed_ = false;
   }
 
-  const std::chrono::milliseconds delay(static_cast<int64_t>(1e3 / frequency_ / addresses_.size()));
+  const int frequency = sensors_[0]->get_config().frequency;
+  const std::chrono::milliseconds delay(static_cast<int64_t>(1e3 / frequency / sensors_.size()));
 
+  // Delay the start of ranging for each sensor
   for (auto & e : sensors_) {
-    if (e->is_ranging()) {
-      assert(e->get_address() == addresses_.at(0));
-      RCLCPP_INFO(this->get_logger(), "Already ranging");
-      return;
-    }
-
-    // Delay the start of ranging for each sensor
     rclcpp::sleep_for(delay);
     e->start_ranging();
   }
 
-  // Set polling
-  timer_ = create_wall_timer(3ms, [this] {
-    for (auto & e : sensors_) {
-      if (e->check_data_ready()) {
-        Header header;
-        header.frame_id = e->id.get_name();
-        header.stamp = this->now();
-
-        auto image = this->convert_to_image_msg(e->get_distance());
-        auto camera_info = this->get_camera_info();
-        image.header = header;
-        camera_info.header = header;
-
-        pubs_distance_.at(e->id)->publish(image);
-        pubs_camera_info_.at(e->id)->publish(camera_info);
-      };
-    }
-  });
+  // Start publishing ranging data
+  ranging_helper_->start();
 
   RCLCPP_INFO(this->get_logger(), "Start ranging");
 }
 
 void VL53L5CXNode::stop_ranging()
 {
-  if (timer_) timer_->cancel();
-
-  for (auto & e : sensors_) {
-    if (!e->is_ranging()) {
-      assert(e->get_address() == addresses_.at(0));
-      RCLCPP_INFO(this->get_logger(), "Not in ranging");
-      return;
-    }
-
-    e->stop_ranging();
+  if (!sensors_[0]->is_ranging()) {
+    RCLCPP_INFO(this->get_logger(), "Not in ranging");
+    return;
   }
+
+  // Stop publishing ranging data
+  ranging_helper_->stop();
+
+  for (auto & e : sensors_) e->stop_ranging();
 
   RCLCPP_INFO(this->get_logger(), "Stopped ranging");
 
@@ -243,53 +236,6 @@ void VL53L5CXNode::stop_ranging()
     this->apply_parameters();
     have_parameters_changed_ = false;
   }
-}
-
-CameraInfo VL53L5CXNode::get_camera_info() const
-{
-  CameraInfo msg;
-
-  msg.height = resolution_;
-  msg.width = resolution_;
-
-  msg.distortion_model = "plumb_bob";
-  msg.d = {0, 0, 0, 0, 0};  // No distortion
-
-  const double c = (msg.width - 1) / 2.;               // Optical center
-  const double f = c / std::tan(45 * M_PI / 180 / 2);  // Focal length
-  msg.k = {f, 0, c, 0, f, c, 0, 0, 1};
-  msg.p = {f, 0, c, 0, 0, f, c, 0, 0, 0, 1, 0};
-  msg.r = {1, 0, 0, 0, 1, 0, 0, 0, 1};
-
-  return msg;
-}
-
-template <class T>
-Image VL53L5CXNode::convert_to_image_msg(const std::vector<T> & src) const
-{
-  using std::is_same;
-  static_assert(
-    is_same<T, float>::value || is_same<T, uint8_t>::value || is_same<T, uint16_t>::value,
-    "Only float, uint8_t or uint16_t is available for image encoding");
-
-  Image msg;
-
-  msg.width = resolution_;
-  msg.height = resolution_;
-  assert(msg.width * msg.height == src.size());
-
-  if (is_same<T, float>::value)
-    msg.encoding = encodings::TYPE_32FC1;
-  else if (is_same<T, uint8_t>::value)
-    msg.encoding = encodings::TYPE_8UC1;
-  else
-    msg.encoding = encodings::TYPE_16UC1;
-
-  msg.step = msg.width * sizeof(T);
-  auto img_ptr = reinterpret_cast<const uint8_t *>(src.data());
-  msg.data = std::vector<uint8_t>(img_ptr, img_ptr + msg.step * msg.height);
-
-  return msg;
 }
 
 std::string VL53L5CXNode::get_sensor_name(Address address) const
