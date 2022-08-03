@@ -200,7 +200,7 @@ uint8_t vl53l5cx_calibrate_xtalk(
 		uint8_t				nb_samples,
 		uint16_t			distance_mm)
 {
-	uint16_t tmp, timeout = 0;
+	uint16_t timeout = 0;
 	uint8_t cmd[] = {0x00, 0x03, 0x00, 0x00};
 	uint8_t footer[] = {0x00, 0x00, 0x00, 0x0F, 0x00, 0x01, 0x03, 0x04};
 	uint8_t continue_loop = 1, status = VL53L5CX_STATUS_OK;
