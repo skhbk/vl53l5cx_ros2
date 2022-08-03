@@ -292,4 +292,9 @@ Image VL53L5CXNode::convert_to_image_msg(const std::vector<T> & src) const
   return msg;
 }
 
+std::string VL53L5CXNode::get_sensor_name(Address address) const
+{
+  return std::string(this->get_fully_qualified_name()) + "_" + get_hex(address);
+}
+
 }  // namespace vl53l5cx

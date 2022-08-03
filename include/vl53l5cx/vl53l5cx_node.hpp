@@ -48,6 +48,8 @@ public:
   void start_ranging();
   void stop_ranging();
 
+  std::string get_sensor_name(Address address) const;
+
 private:
   void configure_parameters();
   sensor_msgs::msg::CameraInfo get_camera_info() const;
