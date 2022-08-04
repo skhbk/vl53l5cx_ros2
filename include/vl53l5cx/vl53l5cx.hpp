@@ -56,7 +56,7 @@ public:
   void start_ranging();
   void stop_ranging();
   bool check_data_ready();
-  bool wait_for_interrupt(const std::chrono::milliseconds & timeout);
+  bool check_interrupt();
   void disable_comms() const;
   void enable_comms() const;
 

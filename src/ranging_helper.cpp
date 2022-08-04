@@ -119,4 +119,32 @@ void PollI2C::stop()
   if (timer_) timer_->cancel();
 }
 
+void DetectInterrupt::start()
+{
+  // Clear (maybe) pseudo interrupts
+  constexpr int timeout = 100;
+  for (int i = 0; i < timeout; ++i) {
+    try {
+      for (auto & e : sensors_) {
+        e->check_interrupt();  // This function throws DeviceError if pseudo interrupt is detected
+        this->publish(e);
+      }
+      break;
+    } catch (DeviceError &) {
+      std::this_thread::sleep_for(1ms);
+    }
+  }
+
+  // Set polling
+  timer_ = node_.create_wall_timer(100us, [this] {
+    for (auto & e : sensors_)
+      if (e->check_interrupt()) this->publish(e);
+  });
+}
+
+void DetectInterrupt::stop()
+{
+  if (timer_) timer_->cancel();
+}
+
 }  // namespace vl53l5cx

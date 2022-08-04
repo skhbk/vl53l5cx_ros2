@@ -163,9 +163,9 @@ bool VL53L5CX::check_data_ready()
   return is_ready;
 }
 
-bool VL53L5CX::wait_for_interrupt(const std::chrono::milliseconds & timeout)
+bool VL53L5CX::check_interrupt()
 {
-  const auto is_ready = INT->wait_for_event(timeout);
+  const auto is_ready = INT->check_event();
   if (is_ready) this->get_ranging_data();
   return is_ready;
 }
