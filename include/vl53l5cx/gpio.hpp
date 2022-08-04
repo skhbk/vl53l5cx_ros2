@@ -36,7 +36,6 @@ public:
 
   void set_request_type(RequestType request_type) const;
   void set_value(Value value) const;
-  bool wait_for_event(const std::chrono::milliseconds & timeout) const;
 
 private:
   GPIO() = delete;

@@ -12,6 +12,8 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
+#include <gpiod.h>
+
 #include <cassert>
 
 #include "vl53l5cx/gpio.hpp"
@@ -65,11 +67,6 @@ void GPIO::set_value(Value value) const
     default:
       assert(false);
   }
-}
-
-bool GPIO::wait_for_event(const std::chrono::milliseconds & timeout) const
-{
-  return line_.event_wait(timeout);
 }
 
 }  // namespace vl53l5cx
