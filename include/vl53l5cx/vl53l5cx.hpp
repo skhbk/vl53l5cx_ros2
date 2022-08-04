@@ -56,6 +56,7 @@ public:
   void start_ranging();
   void stop_ranging();
   bool check_data_ready();
+  bool check_interrupt();
   void disable_comms() const;
   void enable_comms() const;
 

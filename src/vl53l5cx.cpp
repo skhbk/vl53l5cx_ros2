@@ -163,6 +163,13 @@ bool VL53L5CX::check_data_ready()
   return is_ready;
 }
 
+bool VL53L5CX::check_interrupt()
+{
+  const auto is_ready = INT->check_event();
+  if (is_ready) this->get_ranging_data();
+  return is_ready;
+}
+
 void VL53L5CX::disable_comms() const
 {
   LPn->set_value(GPIO::Value::LOW);
