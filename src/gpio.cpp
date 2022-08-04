@@ -69,4 +69,15 @@ void GPIO::set_value(Value value) const
   }
 }
 
+bool GPIO::check_event()
+{
+  const auto fd = line_.event_get_fd();
+  gpiod_line_event event;
+
+  if (gpiod_line_event_read_fd(fd, &event))
+    return false;
+  else
+    return true;
+}
+
 }  // namespace vl53l5cx

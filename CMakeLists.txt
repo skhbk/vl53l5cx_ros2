@@ -25,7 +25,7 @@ add_subdirectory(uld)
 add_executable(ranging src/main.cpp src/vl53l5cx_node.cpp src/vl53l5cx.cpp
                        src/ranging_helper.cpp src/gpio.cpp)
 target_include_directories(ranging PUBLIC ${PROJECT_SOURCE_DIR}/include)
-target_link_libraries(ranging uld gpiodcxx)
+target_link_libraries(ranging uld gpiodcxx gpiod)
 ament_target_dependencies(ranging rclcpp sensor_msgs std_srvs)
 
 install(TARGETS ranging DESTINATION lib/${PROJECT_NAME})
