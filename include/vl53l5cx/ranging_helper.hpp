@@ -56,4 +56,14 @@ public:
   void stop() override;
 };
 
+class DetectInterrupt : public RangingHelper
+{
+  rclcpp::TimerBase::SharedPtr timer_;
+
+public:
+  using RangingHelper::RangingHelper;
+  void start() override;
+  void stop() override;
+};
+
 }  // namespace vl53l5cx

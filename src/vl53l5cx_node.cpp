@@ -69,7 +69,7 @@ VL53L5CXNode::VL53L5CXNode(const std::string & node_name) : Node(node_name)
 
   if (configs[0].int_pin != PinNaN) {
     RCLCPP_INFO(this->get_logger(), "INT enabled");
-    throw std::runtime_error("Interrupt detection is not implemented");
+    ranging_helper_ = std::make_unique<DetectInterrupt>(*this, sensors_);
   } else {
     ranging_helper_ = std::make_unique<PollI2C>(*this, sensors_);
   }
@@ -212,10 +212,10 @@ void VL53L5CXNode::start_ranging()
     e->start_ranging();
   }
 
+  RCLCPP_INFO(this->get_logger(), "Start ranging");
+
   // Start publishing ranging data
   ranging_helper_->start();
-
-  RCLCPP_INFO(this->get_logger(), "Start ranging");
 }
 
 void VL53L5CXNode::stop_ranging()
