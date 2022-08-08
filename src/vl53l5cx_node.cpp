@@ -14,6 +14,7 @@
 
 #include "vl53l5cx/vl53l5cx_node.hpp"
 
+#define DEFAULT_FRAME_ID "world"
 #define DEFAULT_ADDRESS 0x29
 #define DEFAULT_RESOLUTION 4
 #define DEFAULT_FREQUENCY 1
@@ -35,6 +36,14 @@ static auto get_integer_range(int64_t from_value, int64_t to_value, int64_t step
 VL53L5CXNode::VL53L5CXNode(const std::string & node_name) : Node(node_name)
 {
   // Parameter settings
+  {  // Frame ID
+    rcl_interfaces::msg::ParameterDescriptor d;
+    d.name = "frame_id";
+    d.description = "Frame IDs";
+    d.read_only = true;
+    d.type = rclcpp::PARAMETER_STRING_ARRAY;
+    this->declare_parameter<std::vector<std::string>>("frame_id", {}, d);
+  }
   {  // Address
     rcl_interfaces::msg::ParameterDescriptor d;
     d.name = "address";
@@ -140,8 +149,10 @@ void VL53L5CXNode::apply_parameters()
 
 std::vector<VL53L5CX::Config> VL53L5CXNode::parse_parameters() const
 {
+  std::vector<std::string> frame_ids;
   std::vector<int64_t> addresses, lpn_pins, int_pins;
   uint8_t resolution, frequency, ranging_mode;
+  this->get_parameter("frame_id", frame_ids);
   this->get_parameter("address", addresses);
   this->get_parameter("lpn_pin", lpn_pins);
   this->get_parameter("int_pin", int_pins);
@@ -150,6 +161,14 @@ std::vector<VL53L5CX::Config> VL53L5CXNode::parse_parameters() const
   this->get_parameter("frequency", frequency);
 
   const auto n_devices = addresses.size();
+
+  // If providing frame_id
+  if (!frame_ids.empty()) {
+    if (frame_ids.size() != n_devices)
+      throw std::invalid_argument("address and frame_id must be the same size");
+  } else {
+    frame_ids = decltype(frame_ids)(n_devices, DEFAULT_FRAME_ID);
+  }
 
   // If connecting multiple sensors
   if (n_devices > 1) {
@@ -180,12 +199,14 @@ std::vector<VL53L5CX::Config> VL53L5CXNode::parse_parameters() const
 
   std::vector<VL53L5CX::Config> configs(n_devices);
   for (std::size_t i = 0; i < n_devices; ++i) {
-    configs[i].address = static_cast<uint8_t>(addresses[i]);
-    if (!lpn_pins.empty()) configs[i].lpn_pin = lpn_pins[i];
-    if (!int_pins.empty()) configs[i].int_pin = int_pins[i];
-    configs[i].resolution = resolution_parsed;
-    configs[i].ranging_mode = ranging_mode_parsed;
-    configs[i].frequency = static_cast<uint8_t>(frequency);
+    auto & config = configs[i];
+    config.frame_id = frame_ids[i];
+    config.address = static_cast<uint8_t>(addresses[i]);
+    if (!lpn_pins.empty()) config.lpn_pin = lpn_pins[i];
+    if (!int_pins.empty()) config.int_pin = int_pins[i];
+    config.resolution = resolution_parsed;
+    config.ranging_mode = ranging_mode_parsed;
+    config.frequency = static_cast<uint8_t>(frequency);
   }
 
   return configs;

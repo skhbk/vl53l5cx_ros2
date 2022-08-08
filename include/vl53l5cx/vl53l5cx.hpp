@@ -30,6 +30,7 @@ class VL53L5CX
 public:
   struct Config
   {
+    std::string frame_id;
     Address address;
     Resolution resolution;
     Frequency frequency;
