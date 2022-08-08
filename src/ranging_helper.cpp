@@ -40,11 +40,12 @@ RangingHelper::RangingHelper(VL53L5CXNode & node, std::vector<std::shared_ptr<VL
 
 void RangingHelper::publish(std::shared_ptr<VL53L5CX> sensor)
 {
+  const auto & config = sensor->get_config();
+
   Header header;
-  header.frame_id = "vl53l5cx";  // TODO
+  header.frame_id = config.frame_id;
   header.stamp = node_.now();
 
-  const auto & config = sensor->get_config();
   auto image = this->convert_to_image_msg(sensor->get_distance(), config);
   auto camera_info = this->get_camera_info(config);
   image.header = header;
