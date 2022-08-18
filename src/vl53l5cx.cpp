@@ -109,28 +109,32 @@ void VL53L5CX::set_config(const Config & config)
   config_.frequency = config.frequency;
   config_.ranging_mode = config.ranging_mode;
 
+  // Resolution
   const auto resolution = static_cast<uint8_t>(config_.resolution);
   const uint8_t image_size = resolution * resolution;
   if (vl53l5cx_set_resolution(device_->config(), image_size))
-    throw std::runtime_error("Failed to set resolution");
+    throw DeviceError("Failed to set resolution", config_.address);
   distances_.resize(image_size);
 
+  // Frequency
   if (vl53l5cx_set_ranging_frequency_hz(device_->config(), config_.frequency))
-    throw std::runtime_error("Failed to set frequency");
+    throw DeviceError("Failed to set frequency", config_.address);
 
-  uint8_t ranging_mode;
+  // Ranging mode
   switch (config_.ranging_mode) {
     case RangingMode::CONTINUOUS:
-      ranging_mode = VL53L5CX_RANGING_MODE_CONTINUOUS;
+      if (vl53l5cx_set_ranging_mode(device_->config(), VL53L5CX_RANGING_MODE_CONTINUOUS))
+        throw DeviceError("Failed to set ranging mode", config_.address);
       break;
     case RangingMode::AUTONOMOUS:
-      ranging_mode = VL53L5CX_RANGING_MODE_AUTONOMOUS;
+      if (vl53l5cx_set_ranging_mode(device_->config(), VL53L5CX_RANGING_MODE_AUTONOMOUS))
+        throw DeviceError("Failed to set ranging mode", config_.address);
+      if (vl53l5cx_set_integration_time_ms(device_->config(), config_.integration_time))
+        throw DeviceError("Failed to set integration time", config_.address);
       break;
     default:
       assert(false);
   }
-  if (vl53l5cx_set_ranging_mode(device_->config(), ranging_mode))
-    throw std::runtime_error("Failed to set ranging mode");
 }
 
 void VL53L5CX::start_ranging()

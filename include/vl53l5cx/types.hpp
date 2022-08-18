@@ -22,6 +22,7 @@ namespace vl53l5cx
 {
 using Address = uint8_t;
 using Frequency = uint8_t;
+using IntegrationTime = uint16_t;
 using Pin = uint8_t;
 static constexpr Pin PinNaN = 255;
 enum class Resolution { X4 = 4, X8 = 8 };

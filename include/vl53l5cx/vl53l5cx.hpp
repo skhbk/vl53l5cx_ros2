@@ -35,6 +35,7 @@ public:
     Resolution resolution;
     Frequency frequency;
     RangingMode ranging_mode;
+    IntegrationTime integration_time;
     Pin rst_pin = PinNaN;
     Pin lpn_pin = PinNaN;
     Pin int_pin = PinNaN;
