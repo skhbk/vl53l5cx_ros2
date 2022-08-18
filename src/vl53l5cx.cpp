@@ -43,10 +43,15 @@ public:
 VL53L5CX::VL53L5CX(Config config) : device_(std::make_unique<DeviceData>()), config_(config)
 {
   // Initialize GPIO
+  if (config_.rst_pin != PinNaN) {
+    RST = std::make_unique<GPIO>(config_.rst_pin);
+    RST->set_request_type(GPIO::RequestType::OUT);
+    RST->set_value(GPIO::Value::LOW);
+  }
   if (config_.lpn_pin != PinNaN) {
     LPn = std::make_unique<GPIO>(config_.lpn_pin);
     LPn->set_request_type(GPIO::RequestType::OUT);
-    this->enable_comms();
+    LPn->set_value(GPIO::Value::HIGH);
   }
   if (config_.int_pin != PinNaN) {
     INT = std::make_unique<GPIO>(config_.int_pin);
@@ -70,6 +75,8 @@ void VL53L5CX::initialize()
   if (this->is_ranging()) throw std::runtime_error("Stop ranging before initialization");
 
   int status = 0;
+
+  if (RST || LPn) this->reset();
 
   status |= vl53l5cx_comms_init(device_->platform());
   if (status) throw CommsError("Failed to initialize I2C");
@@ -172,14 +179,39 @@ bool VL53L5CX::check_interrupt()
 
 void VL53L5CX::disable_comms() const
 {
-  LPn->set_value(GPIO::Value::LOW);
+  if (LPn)
+    LPn->set_value(GPIO::Value::LOW);
+  else
+    RST->set_value(GPIO::Value::HIGH);
+
   std::this_thread::sleep_for(10ms);
 }
 
 void VL53L5CX::enable_comms() const
 {
-  LPn->set_value(GPIO::Value::HIGH);
+  if (LPn)
+    LPn->set_value(GPIO::Value::HIGH);
+  else
+    RST->set_value(GPIO::Value::LOW);
+
   std::this_thread::sleep_for(10ms);
+}
+
+void VL53L5CX::reset()
+{
+  // I don't know what actually happens with this operation
+  // At least the address is not reset to 0x29
+  if (RST) {
+    RST->set_value(GPIO::Value::HIGH);
+    std::this_thread::sleep_for(10ms);
+    RST->set_value(GPIO::Value::LOW);
+    std::this_thread::sleep_for(10ms);
+  } else {
+    LPn->set_value(GPIO::Value::LOW);
+    std::this_thread::sleep_for(10ms);
+    LPn->set_value(GPIO::Value::HIGH);
+    std::this_thread::sleep_for(10ms);
+  }
 }
 
 void VL53L5CX::get_ranging_data()
