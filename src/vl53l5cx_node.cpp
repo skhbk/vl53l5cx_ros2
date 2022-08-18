@@ -18,7 +18,7 @@
 #define DEFAULT_ADDRESS 0x29
 #define DEFAULT_RESOLUTION 4
 #define DEFAULT_FREQUENCY 1
-#define DEFAULT_RANGING_MODE 0
+#define DEFAULT_INTEGRATION_TIME 5
 
 using std_srvs::srv::Empty;
 
@@ -69,7 +69,7 @@ VL53L5CXNode::VL53L5CXNode(const std::string & node_name) : Node(node_name)
   }
   this->declare_parameter("resolution", DEFAULT_RESOLUTION);
   this->declare_parameter("frequency", DEFAULT_FREQUENCY);
-  this->declare_parameter("ranging_mode", DEFAULT_RANGING_MODE);
+  this->declare_parameter("integration_time", DEFAULT_INTEGRATION_TIME);
 
   const auto configs = this->parse_parameters();
 
@@ -153,14 +153,15 @@ std::vector<VL53L5CX::Config> VL53L5CXNode::parse_parameters() const
 {
   std::vector<std::string> frame_ids;
   std::vector<int64_t> addresses, rst_pins, lpn_pins, int_pins;
-  uint8_t resolution, frequency, ranging_mode;
+  uint8_t resolution, frequency;
+  uint16_t integration_time;
   this->get_parameter("frame_id", frame_ids);
   this->get_parameter("address", addresses);
   this->get_parameter("rst_pin", rst_pins);
   this->get_parameter("lpn_pin", lpn_pins);
   this->get_parameter("int_pin", int_pins);
   this->get_parameter("resolution", resolution);
-  this->get_parameter("ranging_mode", ranging_mode);
+  this->get_parameter("integration_time", integration_time);
   this->get_parameter("frequency", frequency);
 
   const auto n_devices = addresses.size();
@@ -195,23 +196,27 @@ std::vector<VL53L5CX::Config> VL53L5CXNode::parse_parameters() const
   else
     throw std::invalid_argument("'resolution' must be 4 or 8");
 
-  RangingMode ranging_mode_parsed;
-  if (ranging_mode == 0)
-    ranging_mode_parsed = RangingMode::CONTINUOUS;
+  RangingMode ranging_mode;
+  if (integration_time == 0)
+    ranging_mode = RangingMode::CONTINUOUS;
+  else if (integration_time >= 2 && integration_time <= 1000)
+    ranging_mode = RangingMode::AUTONOMOUS;
   else
-    ranging_mode_parsed = RangingMode::AUTONOMOUS;
+    throw std::invalid_argument(
+      "'integration_time' must be 0 (continuous mode) or between 2 and 1000 (autonomous mode)");
 
   std::vector<VL53L5CX::Config> configs(n_devices);
   for (std::size_t i = 0; i < n_devices; ++i) {
     auto & config = configs[i];
     config.frame_id = frame_ids[i];
-    config.address = static_cast<uint8_t>(addresses[i]);
+    config.address = static_cast<Address>(addresses[i]);
     if (!rst_pins.empty()) config.rst_pin = rst_pins[i];
     if (!lpn_pins.empty()) config.lpn_pin = lpn_pins[i];
     if (!int_pins.empty()) config.int_pin = int_pins[i];
     config.resolution = resolution_parsed;
-    config.ranging_mode = ranging_mode_parsed;
-    config.frequency = static_cast<uint8_t>(frequency);
+    config.ranging_mode = ranging_mode;
+    config.integration_time = static_cast<IntegrationTime>(integration_time);
+    config.frequency = static_cast<Frequency>(frequency);
   }
 
   return configs;
