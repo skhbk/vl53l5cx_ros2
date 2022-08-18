@@ -59,9 +59,11 @@ VL53L5CXNode::VL53L5CXNode(const std::string & node_name) : Node(node_name)
     d.read_only = true;
     d.type = rclcpp::PARAMETER_INTEGER_ARRAY;
     d.integer_range.emplace_back(get_integer_range(0, 254));
-    auto d_lpn = d, d_int = d;
+    auto d_rst = d, d_lpn = d, d_int = d;
+    d_rst.description = "RST GPIO pins";
     d_lpn.description = "LPn GPIO pins";
     d_int.description = "INT GPIO pins";
+    this->declare_parameter<std::vector<int64_t>>("rst_pin", {}, d_rst);
     this->declare_parameter<std::vector<int64_t>>("lpn_pin", {}, d_lpn);
     this->declare_parameter<std::vector<int64_t>>("int_pin", {}, d_int);
   }
@@ -150,10 +152,11 @@ void VL53L5CXNode::apply_parameters()
 std::vector<VL53L5CX::Config> VL53L5CXNode::parse_parameters() const
 {
   std::vector<std::string> frame_ids;
-  std::vector<int64_t> addresses, lpn_pins, int_pins;
+  std::vector<int64_t> addresses, rst_pins, lpn_pins, int_pins;
   uint8_t resolution, frequency, ranging_mode;
   this->get_parameter("frame_id", frame_ids);
   this->get_parameter("address", addresses);
+  this->get_parameter("rst_pin", rst_pins);
   this->get_parameter("lpn_pin", lpn_pins);
   this->get_parameter("int_pin", int_pins);
   this->get_parameter("resolution", resolution);
@@ -165,22 +168,23 @@ std::vector<VL53L5CX::Config> VL53L5CXNode::parse_parameters() const
   // If providing frame_id
   if (!frame_ids.empty()) {
     if (frame_ids.size() != n_devices)
-      throw std::invalid_argument("address and frame_id must be the same size");
+      throw std::invalid_argument("'address' and 'frame_id' must be the same size");
   } else {
     frame_ids = decltype(frame_ids)(n_devices, DEFAULT_FRAME_ID);
   }
 
   // If connecting multiple sensors
   if (n_devices > 1) {
-    if (lpn_pins.size() != n_devices)
+    if (rst_pins.size() != n_devices && lpn_pins.size() != n_devices)
       throw std::invalid_argument(
-        "address and lpn_pin must be the same size when connecting multiple sensors");
+        "Either 'rst_pin' or 'lpn_pin' must be the same size as 'address' when connecting multiple "
+        "sensors");
   }
 
   // If using INT (interrupt) pin
   if (!int_pins.empty()) {
     if (int_pins.size() != n_devices)
-      throw std::invalid_argument("address and int_pin must be the same size when using INT");
+      throw std::invalid_argument("'address' and 'int_pin' must be the same size when using INT");
   }
 
   Resolution resolution_parsed;
@@ -189,7 +193,7 @@ std::vector<VL53L5CX::Config> VL53L5CXNode::parse_parameters() const
   else if (resolution == 8)
     resolution_parsed = Resolution::X8;
   else
-    throw std::invalid_argument("resolution must be 4 or 8");
+    throw std::invalid_argument("'resolution' must be 4 or 8");
 
   RangingMode ranging_mode_parsed;
   if (ranging_mode == 0)
@@ -202,6 +206,7 @@ std::vector<VL53L5CX::Config> VL53L5CXNode::parse_parameters() const
     auto & config = configs[i];
     config.frame_id = frame_ids[i];
     config.address = static_cast<uint8_t>(addresses[i]);
+    if (!rst_pins.empty()) config.rst_pin = rst_pins[i];
     if (!lpn_pins.empty()) config.lpn_pin = lpn_pins[i];
     if (!int_pins.empty()) config.int_pin = int_pins[i];
     config.resolution = resolution_parsed;

@@ -35,13 +35,16 @@ public:
     Resolution resolution;
     Frequency frequency;
     RangingMode ranging_mode;
-    Pin lpn_pin = PinNaN, int_pin = PinNaN;
+    Pin rst_pin = PinNaN;
+    Pin lpn_pin = PinNaN;
+    Pin int_pin = PinNaN;
   };
 
 private:
   class DeviceData;
   std::unique_ptr<DeviceData> device_;
   Config config_;
+  std::unique_ptr<GPIO> RST;
   std::unique_ptr<GPIO> LPn;
   std::unique_ptr<GPIO> INT;
   enum DeviceStatus { RANGING = 1 << 0, INITIALIZED = 1 << 1 };
@@ -60,6 +63,7 @@ public:
   bool check_interrupt();
   void disable_comms() const;
   void enable_comms() const;
+  void reset();
 
   bool is_alive();
   bool is_initialized() const { return device_status_ & INITIALIZED; }
