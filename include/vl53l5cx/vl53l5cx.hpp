@@ -23,8 +23,6 @@
 
 namespace vl53l5cx
 {
-class VL53L5CXBuilder;
-
 class VL53L5CX
 {
 public:
