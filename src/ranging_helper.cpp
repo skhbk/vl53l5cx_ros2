@@ -46,7 +46,9 @@ void RangingHelper::publish(std::shared_ptr<VL53L5CX> sensor)
   header.frame_id = config.frame_id;
   header.stamp = node_.now();
 
-  auto image = this->convert_to_image_msg(sensor->get_distance(), config);
+  const auto & ranging_results = sensor->get_results();
+
+  auto image = this->convert_to_image_msg(ranging_results.distance, config);
   auto camera_info = this->get_camera_info(config);
   image.header = header;
   camera_info.header = header;

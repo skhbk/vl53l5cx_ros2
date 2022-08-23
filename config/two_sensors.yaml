@@ -5,3 +5,4 @@
     int_pin: [22, 24]
     frequency: 20
     resolution: 8
+    # filter_outputs: true

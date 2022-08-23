@@ -70,6 +70,7 @@ VL53L5CXNode::VL53L5CXNode(const std::string & node_name) : Node(node_name)
   this->declare_parameter("resolution", DEFAULT_RESOLUTION);
   this->declare_parameter("frequency", DEFAULT_FREQUENCY);
   this->declare_parameter("integration_time", DEFAULT_INTEGRATION_TIME);
+  this->declare_parameter<bool>("filter_outputs", false);
 
   const auto configs = this->parse_parameters();
 
@@ -153,16 +154,17 @@ std::vector<VL53L5CX::Config> VL53L5CXNode::parse_parameters() const
 {
   std::vector<std::string> frame_ids;
   std::vector<int64_t> addresses, rst_pins, lpn_pins, int_pins;
-  uint8_t resolution, frequency;
-  uint16_t integration_time;
+  int64_t resolution, frequency, integration_time;
+  bool filter_outputs;
   this->get_parameter("frame_id", frame_ids);
   this->get_parameter("address", addresses);
   this->get_parameter("rst_pin", rst_pins);
   this->get_parameter("lpn_pin", lpn_pins);
   this->get_parameter("int_pin", int_pins);
   this->get_parameter("resolution", resolution);
-  this->get_parameter("integration_time", integration_time);
   this->get_parameter("frequency", frequency);
+  this->get_parameter("integration_time", integration_time);
+  this->get_parameter("filter_outputs", filter_outputs);
 
   const auto n_devices = addresses.size();
 
@@ -214,9 +216,10 @@ std::vector<VL53L5CX::Config> VL53L5CXNode::parse_parameters() const
     if (!lpn_pins.empty()) config.lpn_pin = lpn_pins[i];
     if (!int_pins.empty()) config.int_pin = int_pins[i];
     config.resolution = resolution_parsed;
+    config.frequency = static_cast<Frequency>(frequency);
     config.ranging_mode = ranging_mode;
     config.integration_time = static_cast<IntegrationTime>(integration_time);
-    config.frequency = static_cast<Frequency>(frequency);
+    config.filter_outputs = filter_outputs;
   }
 
   return configs;

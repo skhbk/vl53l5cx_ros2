@@ -14,6 +14,7 @@
 
 #include <cassert>
 #include <chrono>    // std::chrono_literals
+#include <cmath>     // NAN
 #include <iostream>  // std::cerr
 #include <thread>    // std::this_thread
 
@@ -23,6 +24,8 @@ extern "C" {
 #include "vl53l5cx_api.h"
 #include "vl53l5cx_plugin_xtalk.h"
 }
+
+#define VL53L5CX_USE_RAW_FORMAT
 
 using namespace std::chrono_literals;
 
@@ -39,6 +42,55 @@ public:
   VL53L5CX_Platform * platform() { return &config_.platform; }
   VL53L5CX_ResultsData * results() { return &results_; }
 };
+
+bool VL53L5CX::RangingResults::is_available(RangingOutput output)
+{
+  switch (output) {
+    case RangingOutput::DISTANCE:
+#ifdef VL53L5CX_DISABLE_DISTANCE_MM
+      return false;
+#endif
+      break;
+    case RangingOutput::TARGET_STATUS:
+#ifdef VL53L5CX_DISABLE_TARGET_STATUS
+      return false;
+#endif
+      break;
+
+    default:
+      assert(false);
+  }
+  return true;
+}
+
+void VL53L5CX::RangingResults::resize(Resolution resolution)
+{
+  const auto resolution_casted = static_cast<uint8_t>(resolution);
+  const auto size = resolution_casted * resolution_casted;
+
+  if (this->is_available(RangingOutput::DISTANCE)) {
+    distance.resize(size);
+  }
+  if (this->is_available(RangingOutput::TARGET_STATUS)) {
+    target_status.resize(size);
+  }
+}
+
+void VL53L5CX::RangingResults::filter_outputs()
+{
+  if (!this->is_available(RangingOutput::TARGET_STATUS)) {
+    throw std::invalid_argument(
+      "Outputs filtering is available only when target-status-output is enabled");
+  }
+
+  for (std::size_t i = 0; i < target_status.size(); ++i) {
+    if (target_status.at(i) != 5 && target_status.at(i) != 9) {
+      if (this->is_available(RangingOutput::DISTANCE)) {
+        distance.at(i) = NAN;
+      }
+    }
+  }
+}
 
 VL53L5CX::VL53L5CX(Config config) : device_(std::make_unique<DeviceData>()), config_(config)
 {
@@ -114,7 +166,7 @@ void VL53L5CX::set_config(const Config & config)
   const uint8_t image_size = resolution * resolution;
   if (vl53l5cx_set_resolution(device_->config(), image_size))
     throw DeviceError("Failed to set resolution", config_.address);
-  distances_.resize(image_size);
+  results_.resize(config_.resolution);
 
   // Frequency
   if (vl53l5cx_set_ranging_frequency_hz(device_->config(), config_.frequency))
@@ -226,15 +278,18 @@ void VL53L5CX::get_ranging_data()
 
   const auto resolution = static_cast<uint8_t>(config_.resolution);
   for (int i = 0; i < resolution * resolution; ++i) {
-#ifdef VL53L5CX_ENABLE_DISTANCE_MM
-#ifdef VL53L5CX_USE_RAW_FORMAT
-    constexpr float gain = 1 / (4 * 1000.f);
-#else
-    constexpr float gain = 1 / 1000.f;
-#endif
-    // Convert to metric
-    distances_.at(i) = device_->results()->distance_mm[i] * gain;
-#endif
+    // Distance
+    if (results_.is_available(RangingOutput::DISTANCE)) {
+      constexpr float gain = 1 / (4 * 1000.f);  // Convert to metric
+      results_.distance.at(i) = device_->results()->distance_mm[i] * gain;
+    }
+
+    // Target status
+    if (results_.is_available(RangingOutput::TARGET_STATUS)) {
+      results_.target_status.at(i) = device_->results()->target_status[i];
+    }
+
+    if (config_.filter_outputs) results_.filter_outputs();
   }
 }
 
