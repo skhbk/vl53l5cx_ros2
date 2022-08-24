@@ -9,4 +9,5 @@ set(VL53L5CX_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/inc
 
 add_library(uld STATIC ${VL53L5CX_SOURCES})
 target_include_directories(uld PUBLIC ${VL53L5CX_INCLUDE_DIRS})
-target_compile_definitions(uld PUBLIC VL53L5CX_ENABLE_DISTANCE_MM)
+target_compile_definitions(uld PUBLIC VL53L5CX_ENABLE_DISTANCE_MM
+                                      VL53L5CX_ENABLE_TARGET_STATUS)

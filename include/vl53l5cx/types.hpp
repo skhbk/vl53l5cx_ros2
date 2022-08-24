@@ -28,6 +28,8 @@ static constexpr Pin PinNaN = 255;
 enum class Resolution { X4 = 4, X8 = 8 };
 enum class RangingMode { CONTINUOUS, AUTONOMOUS };
 
+enum class RangingOutput { DISTANCE, TARGET_STATUS };
+
 inline std::string get_hex(Address address)
 {
   std::stringstream ss;

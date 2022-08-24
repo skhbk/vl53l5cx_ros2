@@ -23,8 +23,6 @@
 
 namespace vl53l5cx
 {
-class VL53L5CXBuilder;
-
 class VL53L5CX
 {
 public:
@@ -36,22 +34,32 @@ public:
     Frequency frequency;
     RangingMode ranging_mode;
     IntegrationTime integration_time;
+    bool filter_outputs;
     Pin rst_pin = PinNaN;
     Pin lpn_pin = PinNaN;
     Pin int_pin = PinNaN;
+  };
+
+  struct RangingResults
+  {
+    std::vector<float> distance;
+    std::vector<uint8_t> target_status;
+
+    static bool is_available(RangingOutput output);
+    void resize(Resolution resolution);
+    void filter_outputs();
   };
 
 private:
   class DeviceData;
   std::unique_ptr<DeviceData> device_;
   Config config_;
+  RangingResults results_;
   std::unique_ptr<GPIO> RST;
   std::unique_ptr<GPIO> LPn;
   std::unique_ptr<GPIO> INT;
   enum DeviceStatus { RANGING = 1 << 0, INITIALIZED = 1 << 1 };
   uint8_t device_status_ = 0;
-
-  std::vector<float> distances_;
 
 public:
   VL53L5CX(Config config);
@@ -69,8 +77,8 @@ public:
   bool is_alive();
   bool is_initialized() const { return device_status_ & INITIALIZED; }
   bool is_ranging() const { return device_status_ & RANGING; }
-  const std::vector<float> & get_distance() const { return distances_; }
   const Config & get_config() const { return config_; }
+  const RangingResults & get_results() const { return results_; }
 
 private:
   void get_ranging_data();
