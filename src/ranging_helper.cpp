@@ -28,13 +28,13 @@ RangingHelper::RangingHelper(VL53L5CXNode & node, std::vector<std::shared_ptr<VL
 {
   for (const auto & e : sensors_) {
     const auto address = e->get_config().address;
-    const auto name = node_.get_sensor_name(address);
+    const auto prefix = "~/x" + get_hex(address);
 
     // Create publishers
     pubs_distance_[address] =
-      node_.create_publisher<Image>(name + "/image", rclcpp::SensorDataQoS());
+      node_.create_publisher<Image>(prefix + "/image", rclcpp::SensorDataQoS());
     pubs_camera_info_[address] =
-      node_.create_publisher<CameraInfo>(name + "/camera_info", rclcpp::SensorDataQoS());
+      node_.create_publisher<CameraInfo>(prefix + "/camera_info", rclcpp::SensorDataQoS());
   }
 }
 

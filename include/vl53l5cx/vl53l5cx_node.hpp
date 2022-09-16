@@ -42,8 +42,6 @@ public:
   void start_ranging();
   void stop_ranging();
 
-  std::string get_sensor_name(Address address) const;
-
 private:
   std::vector<VL53L5CX::Config> parse_parameters() const;
 };

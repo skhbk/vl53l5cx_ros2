@@ -272,9 +272,4 @@ void VL53L5CXNode::stop_ranging()
   }
 }
 
-std::string VL53L5CXNode::get_sensor_name(Address address) const
-{
-  return std::string(this->get_fully_qualified_name()) + "_" + get_hex(address);
-}
-
 }  // namespace vl53l5cx
