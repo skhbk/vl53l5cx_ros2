@@ -34,15 +34,13 @@ class VL53L5CXNode : public rclcpp::Node
   bool have_parameters_changed_ = false;
 
 public:
-  explicit VL53L5CXNode(const std::string & node_name);
+  VL53L5CXNode();
   ~VL53L5CXNode();
 
   void initialize();
   void apply_parameters();
   void start_ranging();
   void stop_ranging();
-
-  std::string get_sensor_name(Address address) const;
 
 private:
   std::vector<VL53L5CX::Config> parse_parameters() const;

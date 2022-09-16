@@ -33,7 +33,7 @@ static auto get_integer_range(int64_t from_value, int64_t to_value, int64_t step
   return range;
 }
 
-VL53L5CXNode::VL53L5CXNode(const std::string & node_name) : Node(node_name)
+VL53L5CXNode::VL53L5CXNode() : Node("vl53l5cx")
 {
   // Parameter settings
   {  // Frame ID
@@ -270,11 +270,6 @@ void VL53L5CXNode::stop_ranging()
     this->apply_parameters();
     have_parameters_changed_ = false;
   }
-}
-
-std::string VL53L5CXNode::get_sensor_name(Address address) const
-{
-  return std::string(this->get_fully_qualified_name()) + "_" + get_hex(address);
 }
 
 }  // namespace vl53l5cx
