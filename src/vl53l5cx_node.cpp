@@ -33,7 +33,7 @@ static auto get_integer_range(int64_t from_value, int64_t to_value, int64_t step
   return range;
 }
 
-VL53L5CXNode::VL53L5CXNode(const std::string & node_name) : Node(node_name)
+VL53L5CXNode::VL53L5CXNode() : Node("vl53l5cx")
 {
   // Parameter settings
   {  // Frame ID

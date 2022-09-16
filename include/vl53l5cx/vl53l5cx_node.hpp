@@ -34,7 +34,7 @@ class VL53L5CXNode : public rclcpp::Node
   bool have_parameters_changed_ = false;
 
 public:
-  explicit VL53L5CXNode(const std::string & node_name);
+  VL53L5CXNode();
   ~VL53L5CXNode();
 
   void initialize();
