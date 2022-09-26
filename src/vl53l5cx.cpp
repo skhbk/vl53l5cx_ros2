@@ -163,6 +163,7 @@ void VL53L5CX::set_config(const Config & config)
   config_.resolution = config.resolution;
   config_.frequency = config.frequency;
   config_.ranging_mode = config.ranging_mode;
+  config_.xtalk_data = config.xtalk_data;
 
   // Resolution
   const auto resolution = static_cast<uint8_t>(config_.resolution);
@@ -194,6 +195,10 @@ void VL53L5CX::set_config(const Config & config)
       break;
     default:
       assert(false);
+  }
+
+  if (!config_.xtalk_data.empty()) {
+    this->set_xtalk_data(config_.xtalk_data);
   }
 }
 
@@ -304,6 +309,17 @@ void VL53L5CX::get_ranging_data()
   }
 }
 
+void VL53L5CX::set_xtalk_data(std::vector<int64_t> xtalk_data)
+{
+  int status = 0;
+
+  auto xtalk_data_ptr = reinterpret_cast<uint8_t *>(xtalk_data.data());
+
+  // 'xtalk_data' cannot be const-reference because this function takes non-const pointer
+  status |= vl53l5cx_set_caldata_xtalk(device_->config(), xtalk_data_ptr);
+  if (status) throw DeviceError("Failed to set calibration data", config_.address);
+}
+
 bool VL53L5CX::is_alive()
 {
   uint8_t is_alive;
@@ -311,4 +327,23 @@ bool VL53L5CX::is_alive()
   return (!status && is_alive) ? true : false;
 }
 
+std::vector<int64_t> VL53L5CX::calibrate_xtalk(
+  uint8_t reflectance, uint8_t n_samples, uint16_t distance)
+{
+  int status = 0;
+
+  status |= vl53l5cx_calibrate_xtalk(device_->config(), reflectance, n_samples, distance);
+  if (status) throw DeviceError("Failed to calibrate xtalk", config_.address);
+
+  std::array<uint8_t, VL53L5CX_XTALK_BUFFER_SIZE> xtalk_data_raw;
+  status |= vl53l5cx_get_caldata_xtalk(device_->config(), xtalk_data_raw.data());
+  if (status) throw DeviceError("Failed to get calibration data", config_.address);
+
+  const auto xtalk_data_ptr = reinterpret_cast<int64_t *>(xtalk_data_raw.data());
+  const std::vector<int64_t> xtalk_data(
+    xtalk_data_ptr, xtalk_data_ptr + sizeof(xtalk_data_raw) / sizeof(int64_t));
+  this->set_xtalk_data(xtalk_data);
+
+  return xtalk_data;
+}
 }  // namespace vl53l5cx
