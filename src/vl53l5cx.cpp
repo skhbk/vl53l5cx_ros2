@@ -21,8 +21,8 @@
 #include "vl53l5cx/vl53l5cx.hpp"
 
 extern "C" {
-#include "vl53l5cx_api.h"
-#include "vl53l5cx_plugin_xtalk.h"
+#include "vl53l5cx_api.h"           //NOLINT
+#include "vl53l5cx_plugin_xtalk.h"  //NOLINT
 }
 
 #define VL53L5CX_USE_RAW_FORMAT
@@ -113,11 +113,13 @@ VL53L5CX::VL53L5CX(Config config) : device_(std::make_unique<DeviceData>()), con
 
 VL53L5CX::~VL53L5CX()
 {
-  if (this->is_ranging()) try {
+  if (this->is_ranging()) {
+    try {
       this->stop_ranging();
     } catch (std::runtime_error & e) {
       std::cerr << e.what() << std::endl;
     }
+  }
 
   vl53l5cx_comms_close(device_->platform());
 }

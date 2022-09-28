@@ -14,6 +14,10 @@
 
 #pragma once
 
+#include <map>
+#include <memory>
+#include <vector>
+
 #include "sensor_msgs/msg/camera_info.hpp"
 #include "sensor_msgs/msg/image.hpp"
 #include "vl53l5cx/vl53l5cx.hpp"
