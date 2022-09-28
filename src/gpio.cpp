@@ -55,8 +55,9 @@ void GPIO::set_request_type(RequestType request_type) const
 
 void GPIO::set_value(Value value) const
 {
-  if (line_.direction() != gpiod::line::DIRECTION_OUTPUT)
+  if (line_.direction() != gpiod::line::DIRECTION_OUTPUT) {
     throw std::runtime_error(line_.name() + " is not output");
+  }
 
   switch (value) {
     case Value::LOW:
@@ -75,10 +76,11 @@ bool GPIO::check_event()
   const auto fd = line_.event_get_fd();
   gpiod_line_event event;
 
-  if (gpiod_line_event_read_fd(fd, &event))
+  if (gpiod_line_event_read_fd(fd, &event)) {
     return false;
-  else
+  } else {
     return true;
+  }
 }
 
 }  // namespace vl53l5cx

@@ -94,12 +94,13 @@ Image RangingHelper::convert_to_image_msg(
   msg.height = resolution;
   assert(msg.width * msg.height == src.size());
 
-  if (is_same<T, float>::value)
+  if (is_same<T, float>::value) {
     msg.encoding = encodings::TYPE_32FC1;
-  else if (is_same<T, uint8_t>::value)
+  } else if (is_same<T, uint8_t>::value) {
     msg.encoding = encodings::TYPE_8UC1;
-  else
+  } else {
     msg.encoding = encodings::TYPE_16UC1;
+  }
 
   msg.step = msg.width * sizeof(T);
   auto img_ptr = reinterpret_cast<const uint8_t *>(src.data());

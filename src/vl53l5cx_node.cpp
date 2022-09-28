@@ -171,42 +171,47 @@ std::vector<VL53L5CX::Config> VL53L5CXNode::parse_parameters() const
 
   // If providing frame_id
   if (!frame_ids.empty()) {
-    if (frame_ids.size() != n_devices)
+    if (frame_ids.size() != n_devices) {
       throw std::invalid_argument("'address' and 'frame_id' must be the same size");
+    }
   } else {
     frame_ids = decltype(frame_ids)(n_devices, DEFAULT_FRAME_ID);
   }
 
   // If connecting multiple sensors
   if (n_devices > 1) {
-    if (rst_pins.size() != n_devices && lpn_pins.size() != n_devices)
+    if (rst_pins.size() != n_devices && lpn_pins.size() != n_devices) {
       throw std::invalid_argument(
         "Either 'rst_pin' or 'lpn_pin' must be the same size as 'address' when connecting multiple "
         "sensors");
+    }
   }
 
   // If using INT (interrupt) pin
   if (!int_pins.empty()) {
-    if (int_pins.size() != n_devices)
+    if (int_pins.size() != n_devices) {
       throw std::invalid_argument("'address' and 'int_pin' must be the same size when using INT");
+    }
   }
 
   Resolution resolution_parsed;
-  if (resolution == 4)
+  if (resolution == 4) {
     resolution_parsed = Resolution::X4;
-  else if (resolution == 8)
+  } else if (resolution == 8) {
     resolution_parsed = Resolution::X8;
-  else
+  } else {
     throw std::invalid_argument("'resolution' must be 4 or 8");
+  }
 
   RangingMode ranging_mode;
-  if (integration_time == 0)
+  if (integration_time == 0) {
     ranging_mode = RangingMode::CONTINUOUS;
-  else if (integration_time >= 2 && integration_time <= 1000)
+  } else if (integration_time >= 2 && integration_time <= 1000) {
     ranging_mode = RangingMode::AUTONOMOUS;
-  else
+  } else {
     throw std::invalid_argument(
       "'integration_time' must be 0 (continuous mode) or between 2 and 1000 (autonomous mode)");
+  }
 
   std::vector<VL53L5CX::Config> configs(n_devices);
   for (std::size_t i = 0; i < n_devices; ++i) {
