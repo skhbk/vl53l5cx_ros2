@@ -21,8 +21,8 @@
 #include "vl53l5cx/vl53l5cx.hpp"
 
 extern "C" {
-#include "vl53l5cx_api.h"
-#include "vl53l5cx_plugin_xtalk.h"
+#include "vl53l5cx_api.h"           //NOLINT
+#include "vl53l5cx_plugin_xtalk.h"  //NOLINT
 }
 
 #define VL53L5CX_USE_RAW_FORMAT
@@ -113,11 +113,13 @@ VL53L5CX::VL53L5CX(Config config) : device_(std::make_unique<DeviceData>()), con
 
 VL53L5CX::~VL53L5CX()
 {
-  if (this->is_ranging()) try {
+  if (this->is_ranging()) {
+    try {
       this->stop_ranging();
     } catch (std::runtime_error & e) {
       std::cerr << e.what() << std::endl;
     }
+  }
 
   vl53l5cx_comms_close(device_->platform());
 }
@@ -143,9 +145,10 @@ void VL53L5CX::initialize()
   if (status) throw DeviceError("Failed to set I2C address", config_.address);
 
   status |= vl53l5cx_init(device_->config());
-  if (status)
+  if (status) {
     throw DeviceError(
       "Failed to initialize the device: " + std::to_string(status), config_.address);
+  }
 
   device_status_ |= INITIALIZED;
 
@@ -164,25 +167,30 @@ void VL53L5CX::set_config(const Config & config)
   // Resolution
   const auto resolution = static_cast<uint8_t>(config_.resolution);
   const uint8_t image_size = resolution * resolution;
-  if (vl53l5cx_set_resolution(device_->config(), image_size))
+  if (vl53l5cx_set_resolution(device_->config(), image_size)) {
     throw DeviceError("Failed to set resolution", config_.address);
+  }
   results_.resize(config_.resolution);
 
   // Frequency
-  if (vl53l5cx_set_ranging_frequency_hz(device_->config(), config_.frequency))
+  if (vl53l5cx_set_ranging_frequency_hz(device_->config(), config_.frequency)) {
     throw DeviceError("Failed to set frequency", config_.address);
+  }
 
   // Ranging mode
   switch (config_.ranging_mode) {
     case RangingMode::CONTINUOUS:
-      if (vl53l5cx_set_ranging_mode(device_->config(), VL53L5CX_RANGING_MODE_CONTINUOUS))
+      if (vl53l5cx_set_ranging_mode(device_->config(), VL53L5CX_RANGING_MODE_CONTINUOUS)) {
         throw DeviceError("Failed to set ranging mode", config_.address);
+      }
       break;
     case RangingMode::AUTONOMOUS:
-      if (vl53l5cx_set_ranging_mode(device_->config(), VL53L5CX_RANGING_MODE_AUTONOMOUS))
+      if (vl53l5cx_set_ranging_mode(device_->config(), VL53L5CX_RANGING_MODE_AUTONOMOUS)) {
         throw DeviceError("Failed to set ranging mode", config_.address);
-      if (vl53l5cx_set_integration_time_ms(device_->config(), config_.integration_time))
+      }
+      if (vl53l5cx_set_integration_time_ms(device_->config(), config_.integration_time)) {
         throw DeviceError("Failed to set integration time", config_.address);
+      }
       break;
     default:
       assert(false);
@@ -235,20 +243,22 @@ bool VL53L5CX::check_interrupt()
 
 void VL53L5CX::disable_comms() const
 {
-  if (LPn)
+  if (LPn) {
     LPn->set_value(GPIO::Value::LOW);
-  else
+  } else {
     RST->set_value(GPIO::Value::HIGH);
+  }
 
   std::this_thread::sleep_for(10ms);
 }
 
 void VL53L5CX::enable_comms() const
 {
-  if (LPn)
+  if (LPn) {
     LPn->set_value(GPIO::Value::HIGH);
-  else
+  } else {
     RST->set_value(GPIO::Value::LOW);
+  }
 
   std::this_thread::sleep_for(10ms);
 }
@@ -273,8 +283,9 @@ void VL53L5CX::reset()
 void VL53L5CX::get_ranging_data()
 {
   auto status = vl53l5cx_get_ranging_data(device_->config(), device_->results());
-  if (status)
+  if (status) {
     throw DeviceError("Failed to get ranging data: " + std::to_string(status), config_.address);
+  }
 
   const auto resolution = static_cast<uint8_t>(config_.resolution);
   for (int i = 0; i < resolution * resolution; ++i) {

@@ -62,7 +62,7 @@ private:
   uint8_t device_status_ = 0;
 
 public:
-  VL53L5CX(Config config);
+  explicit VL53L5CX(Config config);
   ~VL53L5CX();
   void initialize();
   void set_config(const Config & config);

@@ -13,22 +13,49 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-find_package(ament_cmake REQUIRED)
-find_package(rclcpp REQUIRED)
-find_package(sensor_msgs REQUIRED)
-find_package(std_srvs REQUIRED)
+find_package(ament_cmake_auto REQUIRED)
+ament_auto_find_build_dependencies()
 
 add_subdirectory(uld)
 
-add_executable(ranging src/main.cpp src/vl53l5cx_node.cpp src/vl53l5cx.cpp
-                       src/ranging_helper.cpp src/gpio.cpp)
-target_include_directories(ranging PUBLIC ${PROJECT_SOURCE_DIR}/include)
-target_link_libraries(ranging uld gpiodcxx gpiod)
-ament_target_dependencies(ranging rclcpp sensor_msgs std_srvs)
+ament_auto_add_executable(
+  ranging
+  src/main.cpp
+  src/vl53l5cx_node.cpp
+  src/vl53l5cx.cpp
+  src/ranging_helper.cpp
+  src/gpio.cpp
+)
+target_link_libraries(
+  ranging
+  uld
+  gpiodcxx
+  gpiod
+)
 
-install(TARGETS ranging DESTINATION lib/${PROJECT_NAME})
-install(DIRECTORY launch DESTINATION share/${PROJECT_NAME})
-install(DIRECTORY config DESTINATION share/${PROJECT_NAME})
-ament_package()
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  list(
+    APPEND
+    AMENT_LINT_AUTO_EXCLUDE
+    ament_cmake_copyright
+    ament_cmake_cppcheck
+    ament_cmake_cpplint
+    ament_cmake_uncrustify
+  )
+  ament_lint_auto_find_test_dependencies()
+
+  # Exclude files of ULD
+  file(
+    GLOB_RECURSE
+    _linter_excludes
+    uld/*.c
+    uld/*.h
+  )
+  ament_cppcheck(EXCLUDE ${_linter_excludes})
+  ament_cpplint(EXCLUDE ${_linter_excludes})
+endif()
+
+ament_auto_package(INSTALL_TO_SHARE launch config)
