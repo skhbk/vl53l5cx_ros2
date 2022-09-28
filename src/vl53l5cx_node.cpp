@@ -118,7 +118,8 @@ void VL53L5CXNode::initialize()
     for (auto & e : sensors_) {
       e->enable_comms();
       RCLCPP_INFO(
-        this->get_logger(), "Initializing device at 0x" + get_hex(e->get_config().address));
+        this->get_logger(),
+        ("Initializing device at 0x" + get_hex(e->get_config().address)).c_str());
       e->initialize();
       e->disable_comms();
     }
