@@ -15,6 +15,7 @@
 #include <gpiod.h>
 
 #include <cassert>
+#include <stdexcept>
 
 #include "vl53l5cx/gpio.hpp"
 
