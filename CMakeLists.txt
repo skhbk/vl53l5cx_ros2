@@ -13,20 +13,25 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-find_package(ament_cmake REQUIRED)
-find_package(rclcpp REQUIRED)
-find_package(sensor_msgs REQUIRED)
-find_package(std_srvs REQUIRED)
+find_package(ament_cmake_auto REQUIRED)
+ament_auto_find_build_dependencies()
 
 add_subdirectory(uld)
 
-add_executable(ranging src/main.cpp src/vl53l5cx_node.cpp src/vl53l5cx.cpp
-                       src/ranging_helper.cpp src/gpio.cpp)
-target_include_directories(ranging PUBLIC ${PROJECT_SOURCE_DIR}/include)
-target_link_libraries(ranging uld gpiodcxx gpiod)
-ament_target_dependencies(ranging rclcpp sensor_msgs std_srvs)
+ament_auto_add_executable(
+  ranging
+  src/main.cpp
+  src/vl53l5cx_node.cpp
+  src/vl53l5cx.cpp
+  src/ranging_helper.cpp
+  src/gpio.cpp
+)
+target_link_libraries(
+  ranging
+  uld
+  gpiodcxx
+  gpiod
+)
 
-install(TARGETS ranging DESTINATION lib/${PROJECT_NAME})
-install(DIRECTORY launch DESTINATION share/${PROJECT_NAME})
-install(DIRECTORY config DESTINATION share/${PROJECT_NAME})
-ament_package()
+
+ament_auto_package(INSTALL_TO_SHARE launch config)
