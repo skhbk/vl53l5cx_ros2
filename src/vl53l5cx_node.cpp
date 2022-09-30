@@ -16,6 +16,7 @@
 
 #define DEFAULT_FRAME_ID "world"
 #define DEFAULT_ADDRESS 0x29
+#define DEFAULT_GPIOCHIP "gpiochip0"
 #define DEFAULT_RESOLUTION 4
 #define DEFAULT_FREQUENCY 1
 #define DEFAULT_INTEGRATION_TIME 5
@@ -67,6 +68,7 @@ VL53L5CXNode::VL53L5CXNode() : Node("vl53l5cx")
     this->declare_parameter<std::vector<int64_t>>("lpn_pin", {}, d_lpn);
     this->declare_parameter<std::vector<int64_t>>("int_pin", {}, d_int);
   }
+  this->declare_parameter<std::string>("gpiochip", DEFAULT_GPIOCHIP);
   this->declare_parameter("resolution", DEFAULT_RESOLUTION);
   this->declare_parameter("frequency", DEFAULT_FREQUENCY);
   this->declare_parameter("integration_time", DEFAULT_INTEGRATION_TIME);
@@ -154,10 +156,12 @@ void VL53L5CXNode::apply_parameters()
 std::vector<VL53L5CX::Config> VL53L5CXNode::parse_parameters() const
 {
   std::vector<std::string> frame_ids;
+  std::string gpiochip;
   std::vector<int64_t> addresses, rst_pins, lpn_pins, int_pins;
   int64_t resolution, frequency, integration_time;
   bool filter_outputs;
   this->get_parameter("frame_id", frame_ids);
+  this->get_parameter("gpiochip", gpiochip);
   this->get_parameter("address", addresses);
   this->get_parameter("rst_pin", rst_pins);
   this->get_parameter("lpn_pin", lpn_pins);
@@ -218,6 +222,7 @@ std::vector<VL53L5CX::Config> VL53L5CXNode::parse_parameters() const
     auto & config = configs[i];
     config.frame_id = frame_ids[i];
     config.address = static_cast<Address>(addresses[i]);
+    config.gpiochip = gpiochip;
     if (!rst_pins.empty()) config.rst_pin = rst_pins[i];
     if (!lpn_pins.empty()) config.lpn_pin = lpn_pins[i];
     if (!int_pins.empty()) config.int_pin = int_pins[i];
