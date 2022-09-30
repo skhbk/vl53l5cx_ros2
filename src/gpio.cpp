@@ -12,20 +12,18 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#include <gpiod.h>
+#include "vl53l5cx/gpio.hpp"
 
 #include <cassert>
 #include <stdexcept>
 
-#include "vl53l5cx/gpio.hpp"
-
 namespace vl53l5cx
 {
-GPIO::GPIO(uint8_t pin) : pin_(pin)
+GPIO::GPIO(uint8_t pin, const std::string & chip) : pin_(pin)
 {
-  gpiod::chip chip("gpiochip0");
-  assert(chip);
-  line_ = chip.get_line(pin_);
+  gpiod::chip gpiochip(chip);
+  assert(gpiochip);
+  line_ = gpiochip.get_line(pin_);
   if (!line_) throw std::runtime_error("Cannot find GPIO line " + std::to_string(pin));
   if (line_.is_used()) throw std::runtime_error(line_.name() + " is already used");
 }

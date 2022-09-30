@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <string>
+
 #include <gpiod.hpp>
 
 namespace vl53l5cx
@@ -29,7 +31,7 @@ private:
   gpiod::line line_;
 
 public:
-  explicit GPIO(uint8_t pin);
+  GPIO(uint8_t pin, const std::string & chip);
   ~GPIO() noexcept;
 
   uint8_t pin() const noexcept { return pin_; }
