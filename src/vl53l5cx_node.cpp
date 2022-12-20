@@ -20,6 +20,9 @@
 #define DEFAULT_RESOLUTION 4
 #define DEFAULT_FREQUENCY 1
 #define DEFAULT_INTEGRATION_TIME 5
+#define DEFAULT_CALIBRATION_REFLECTANCE 0
+#define DEFAULT_CALIBRATION_SAMPLES 8
+#define DEFAULT_CALIBRATION_DISTANCE 0
 
 using std_srvs::srv::Empty;
 
@@ -73,6 +76,10 @@ VL53L5CXNode::VL53L5CXNode() : Node("vl53l5cx")
   this->declare_parameter("frequency", DEFAULT_FREQUENCY);
   this->declare_parameter("integration_time", DEFAULT_INTEGRATION_TIME);
   this->declare_parameter<bool>("filter_outputs", false);
+  this->declare_parameter("calibration.reflectance", DEFAULT_CALIBRATION_REFLECTANCE);
+  this->declare_parameter("calibration.n_samples", DEFAULT_CALIBRATION_SAMPLES);
+  this->declare_parameter("calibration.distance", DEFAULT_CALIBRATION_DISTANCE);
+  this->declare_parameter<std::vector<int64_t>>("xtalk_data", std::vector<int64_t>{});
 
   const auto configs = this->parse_parameters();
 
@@ -104,6 +111,9 @@ VL53L5CXNode::VL53L5CXNode() : Node("vl53l5cx")
   services_.emplace_back(this->create_service<Empty>(
     "~/stop_ranging",
     [this](Empty::Request::SharedPtr, Empty::Response::SharedPtr) { this->stop_ranging(); }));
+  services_.emplace_back(this->create_service<Empty>(
+    "~/calibrate_xtalk",
+    [this](Empty::Request::SharedPtr, Empty::Response::SharedPtr) { this->calibrate_xtalk(); }));
 }
 
 VL53L5CXNode::~VL53L5CXNode() {}
@@ -157,7 +167,7 @@ std::vector<VL53L5CX::Config> VL53L5CXNode::parse_parameters() const
 {
   std::vector<std::string> frame_ids;
   std::string gpiochip;
-  std::vector<int64_t> addresses, rst_pins, lpn_pins, int_pins;
+  std::vector<int64_t> addresses, rst_pins, lpn_pins, int_pins, xtalk_data;
   int64_t resolution, frequency, integration_time;
   bool filter_outputs;
   this->get_parameter("frame_id", frame_ids);
@@ -170,6 +180,7 @@ std::vector<VL53L5CX::Config> VL53L5CXNode::parse_parameters() const
   this->get_parameter("frequency", frequency);
   this->get_parameter("integration_time", integration_time);
   this->get_parameter("filter_outputs", filter_outputs);
+  this->get_parameter("xtalk_data", xtalk_data);
 
   const auto n_devices = addresses.size();
 
@@ -231,6 +242,7 @@ std::vector<VL53L5CX::Config> VL53L5CXNode::parse_parameters() const
     config.ranging_mode = ranging_mode;
     config.integration_time = static_cast<IntegrationTime>(integration_time);
     config.filter_outputs = filter_outputs;
+    config.xtalk_data = xtalk_data;
   }
 
   return configs;
@@ -281,6 +293,21 @@ void VL53L5CXNode::stop_ranging()
     this->apply_parameters();
     have_parameters_changed_ = false;
   }
+}
+
+void VL53L5CXNode::calibrate_xtalk()
+{
+  int reflectance, distance, n_samples;
+  this->get_parameter("calibration.reflectance", reflectance);
+  this->get_parameter("calibration.n_samples", n_samples);
+  this->get_parameter("calibration.distance", distance);
+
+  RCLCPP_INFO(this->get_logger(), "Start calibration");
+  auto xtalk_data = sensors_.at(0)->calibrate_xtalk(reflectance, n_samples, distance);
+  this->set_parameter({"xtalk_data", xtalk_data});
+  RCLCPP_INFO(
+    this->get_logger(),
+    "Finished calibration. The xtalk data is set to the parameter 'xtalk_data'");
 }
 
 }  // namespace vl53l5cx

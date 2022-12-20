@@ -39,6 +39,7 @@ public:
     Pin rst_pin = PinNaN;
     Pin lpn_pin = PinNaN;
     Pin int_pin = PinNaN;
+    std::vector<int64_t> xtalk_data;
   };
 
   struct RangingResults
@@ -74,6 +75,7 @@ public:
   void disable_comms() const;
   void enable_comms() const;
   void reset();
+  std::vector<int64_t> calibrate_xtalk(uint8_t reflectance, uint8_t n_samples, uint16_t distance);
 
   bool is_alive();
   bool is_initialized() const { return device_status_ & INITIALIZED; }
@@ -83,6 +85,7 @@ public:
 
 private:
   void get_ranging_data();
+  void set_xtalk_data(std::vector<int64_t> xtalk_data);
 };
 
 }  // namespace vl53l5cx

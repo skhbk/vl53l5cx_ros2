@@ -1,0 +1,11 @@
+/**:
+  ros__parameters:
+    address: [0x2a]
+    resolution: 8
+    frequency: 10
+    integration_time: 5
+    calibration:
+      reflectance: 6
+      n_samples: 16
+      distance: 620
+      

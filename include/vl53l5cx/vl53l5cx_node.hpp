@@ -44,6 +44,7 @@ public:
   void apply_parameters();
   void start_ranging();
   void stop_ranging();
+  void calibrate_xtalk();
 
 private:
   std::vector<VL53L5CX::Config> parse_parameters() const;
