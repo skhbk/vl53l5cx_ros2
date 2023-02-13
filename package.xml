@@ -9,10 +9,11 @@
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
+  <depend>generate_parameter_library</depend>
+  <depend>libgpiod-dev</depend>
   <depend>rclcpp</depend>
   <depend>sensor_msgs</depend>
   <depend>std_srvs</depend>
-  <depend>libgpiod-dev</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

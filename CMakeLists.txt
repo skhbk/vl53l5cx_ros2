@@ -6,26 +6,33 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+add_compile_options(-fPIC)
 
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
 add_subdirectory(uld)
 
-ament_auto_add_executable(
-  ranging
-  src/main.cpp
+generate_parameter_library(vl53l5cx_params src/vl53l5cx_params.yaml)
+
+ament_auto_add_library(
+  ${PROJECT_NAME}
+  SHARED
   src/vl53l5cx_node.cpp
   src/vl53l5cx.cpp
   src/ranging_helper.cpp
   src/gpio.cpp
 )
 target_link_libraries(
-  ranging
+  ${PROJECT_NAME}
+  vl53l5cx_params
   uld
   gpiodcxx
   gpiod
 )
+
+ament_auto_add_executable(ranging_node src/ranging_node.cpp)
+target_link_libraries(ranging_node ${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

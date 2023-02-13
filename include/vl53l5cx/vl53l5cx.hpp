@@ -15,6 +15,7 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -36,9 +37,9 @@ public:
     IntegrationTime integration_time;
     bool filter_outputs;
     std::string gpiochip;
-    Pin rst_pin = PinNaN;
-    Pin lpn_pin = PinNaN;
-    Pin int_pin = PinNaN;
+    std::optional<Pin> rst_pin;
+    std::optional<Pin> lpn_pin;
+    std::optional<Pin> int_pin;
     std::vector<int64_t> xtalk_data;
   };
 

@@ -19,8 +19,11 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_srvs/srv/empty.hpp"
+
 #include "vl53l5cx/ranging_helper.hpp"
 #include "vl53l5cx/vl53l5cx.hpp"
+
+#include "vl53l5cx_params.hpp"
 
 namespace vl53l5cx
 {
@@ -28,13 +31,13 @@ class RangingHelper;
 
 class VL53L5CXNode : public rclcpp::Node
 {
+  std::shared_ptr<ParamListener> param_listener_;
+  Params params_;
+
   std::vector<rclcpp::Service<std_srvs::srv::Empty>::SharedPtr> services_;
-  OnSetParametersCallbackHandle::SharedPtr on_parameters_callback_handle_;
 
   std::vector<std::shared_ptr<VL53L5CX>> sensors_;
-
   std::unique_ptr<RangingHelper> ranging_helper_;
-  bool have_parameters_changed_ = false;
 
 public:
   VL53L5CXNode();
@@ -47,7 +50,7 @@ public:
   void calibrate_xtalk();
 
 private:
-  std::vector<VL53L5CX::Config> parse_parameters() const;
+  static std::vector<VL53L5CX::Config> parse_parameters(const Params & params);
 };
 
 }  // namespace vl53l5cx

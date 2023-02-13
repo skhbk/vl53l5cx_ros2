@@ -1,7 +1,0 @@
-/**:
-  ros__parameters:
-    address: [0x29]
-    # lpn_pin: [27]
-    # int_pin: [22]
-    frequency: 20
-    resolution: 8
