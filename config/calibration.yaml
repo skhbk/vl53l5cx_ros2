@@ -1,4 +1,4 @@
-/**:
+vl53l5cx:
   ros__parameters:
     address: [0x2a]
     resolution: 8
@@ -8,4 +8,3 @@
       reflectance: 6
       n_samples: 16
       distance: 620
-      

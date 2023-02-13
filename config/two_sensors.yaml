@@ -1,4 +1,4 @@
-/**:
+vl53l5cx:
   ros__parameters:
     address: [0x2a, 0x2b]
     lpn_pin: [27, 23]
