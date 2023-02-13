@@ -13,6 +13,8 @@ ament_auto_find_build_dependencies()
 
 add_subdirectory(uld)
 
+generate_parameter_library(vl53l5cx_params src/vl53l5cx_params.yaml)
+
 ament_auto_add_library(
   ${PROJECT_NAME}
   SHARED
@@ -23,6 +25,7 @@ ament_auto_add_library(
 )
 target_link_libraries(
   ${PROJECT_NAME}
+  vl53l5cx_params
   uld
   gpiodcxx
   gpiod
