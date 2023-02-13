@@ -95,18 +95,18 @@ void VL53L5CX::RangingResults::filter_outputs()
 VL53L5CX::VL53L5CX(Config config) : device_(std::make_unique<DeviceData>()), config_(config)
 {
   // Initialize GPIO
-  if (config_.rst_pin != PinNaN) {
-    RST = std::make_unique<GPIO>(config_.rst_pin, config_.gpiochip);
+  if (config_.rst_pin) {
+    RST = std::make_unique<GPIO>(config_.rst_pin.value(), config_.gpiochip);
     RST->set_request_type(GPIO::RequestType::OUT);
     RST->set_value(GPIO::Value::LOW);
   }
-  if (config_.lpn_pin != PinNaN) {
-    LPn = std::make_unique<GPIO>(config_.lpn_pin, config_.gpiochip);
+  if (config_.lpn_pin) {
+    LPn = std::make_unique<GPIO>(config_.lpn_pin.value(), config_.gpiochip);
     LPn->set_request_type(GPIO::RequestType::OUT);
     LPn->set_value(GPIO::Value::HIGH);
   }
-  if (config_.int_pin != PinNaN) {
-    INT = std::make_unique<GPIO>(config_.int_pin, config_.gpiochip);
+  if (config_.int_pin) {
+    INT = std::make_unique<GPIO>(config_.int_pin.value(), config_.gpiochip);
     INT->set_request_type(GPIO::RequestType::FALLING_EDGE);
   }
 }
