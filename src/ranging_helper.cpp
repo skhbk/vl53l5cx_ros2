@@ -46,16 +46,20 @@ void RangingHelper::publish(std::shared_ptr<VL53L5CX> sensor)
   header.frame_id = config.frame_id;
   header.stamp = node_.now();
 
-  const auto & ranging_results = sensor->get_results();
+  try {
+    const auto & ranging_results = sensor->get_results();
+    auto image = this->convert_to_image_msg(ranging_results.distance, config);
+    auto camera_info = this->get_camera_info(config);
+    image.header = header;
+    camera_info.header = header;
 
-  auto image = this->convert_to_image_msg(ranging_results.distance, config);
-  auto camera_info = this->get_camera_info(config);
-  image.header = header;
-  camera_info.header = header;
-
-  const auto address = config.address;
-  pubs_distance_.at(address)->publish(image);
-  pubs_camera_info_.at(address)->publish(camera_info);
+    const auto address = config.address;
+    pubs_distance_.at(address)->publish(image);
+    pubs_camera_info_.at(address)->publish(camera_info);
+  } catch (const DeviceError & e) {
+    this->stop();
+    RCLCPP_ERROR(node_.get_logger(), e.what());
+  }
 }
 
 CameraInfo RangingHelper::get_camera_info(const VL53L5CX::Config & config)
@@ -113,8 +117,16 @@ void PollI2C::start()
 {
   // Set polling
   timer_ = node_.create_wall_timer(3ms, [this] {
-    for (auto & e : sensors_)
-      if (e->check_data_ready()) this->publish(e);
+    try {
+      for (auto & e : sensors_) {
+        if (e->check_data_ready()) {
+          this->publish(e);
+        }
+      }
+    } catch (const DeviceError & e) {
+      this->stop();
+      RCLCPP_ERROR(node_.get_logger(), e.what());
+    }
   });
 }
 
