@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "rclcpp/rclcpp.hpp"
+#include "rclcpp_lifecycle/lifecycle_node.hpp"
 #include "std_srvs/srv/empty.hpp"
 
 #include "vl53l5cx/ranging_helper.hpp"
@@ -29,7 +30,7 @@ namespace vl53l5cx
 {
 class RangingHelper;
 
-class VL53L5CXNode : public rclcpp::Node
+class VL53L5CXNode : public rclcpp_lifecycle::LifecycleNode
 {
   std::shared_ptr<ParamListener> param_listener_;
   Params params_;
@@ -40,16 +41,19 @@ class VL53L5CXNode : public rclcpp::Node
   std::unique_ptr<RangingHelper> ranging_helper_;
 
 public:
-  VL53L5CXNode();
+  using LifecycleNode::LifecycleNode;
   ~VL53L5CXNode();
 
-  void initialize();
-  void apply_parameters();
-  void start_ranging();
-  void stop_ranging();
-  void calibrate_xtalk();
+  CallbackReturn on_configure(const rclcpp_lifecycle::State & previous_state) override;
+  CallbackReturn on_cleanup(const rclcpp_lifecycle::State & previous_state) override;
+  CallbackReturn on_shutdown(const rclcpp_lifecycle::State & previous_state) override;
+  CallbackReturn on_activate(const rclcpp_lifecycle::State & previous_state) override;
+  CallbackReturn on_deactivate(const rclcpp_lifecycle::State & previous_state) override;
 
 private:
+  void initialize();
+  void apply_parameters();
+  void calibrate_xtalk();
   static std::vector<VL53L5CX::Config> parse_parameters(const Params & params);
 };
 
