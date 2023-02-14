@@ -45,46 +45,44 @@ See [Docker section](#docker).
 
 ## Usage
 
-### Single Sensor
+The ranging node is a `LifecycleNode`.
+Each transition performs the following operations:
 
-1. Connect I2C wires (SCL, SDA, 3V3 and GND).
-2. Run the node.
+| Transition | Operation                            |
+| ---------- | ------------------------------------ |
+| configure  | Initialize devices (takes some time) |
+| activate   | Start ranging                        |
+| deactivate | Stop ranging                         |
+
+Here are example steps.
+
+1. Connect I2C wires (SCL, SDA, 3V3 and GND) and RST/LPn for each sensor (if multiple sensors are connected).
+2. Create your own config file in `config/`. Then specify arbitrary I2C addresses and the GPIO chip and pins (according to your connection). See `config/` for examples.
+3. Start the node by using `ranging.launch.py`. `two_sensors.yaml` is used as config file here.
 
     ``` shell
-    ros2 run vl53l5cx ranging_node
+    ros2 launch vl53l5cx ranging.launch.py config_file:=two_sensors.yaml
     ```
 
-    Then, the node starts initialization.
+    The launch file invokes the *configure* transition.
 
-3. Start ranging by calling `/vl53l5cx/start_ranging` service using `rqt_service_caller` or following command:
+4. Start ranging by triggering the *activate* transition.
 
     ```shell
-    ros2 service call /vl53l5cx/start_ranging std_srvs/srv/Empty
+    ros2 lifecycle set /vl53l5cx activate
     ```
 
-4. Stop ranging by calling `/vl53l5cx/stop_ranging` service or just pressing Ctrl+C.
+    Or, set `activate_on_configure:=true` in launch argument to start ranging immediately after initialization.
 
-### Multiple Sensors (Launch)
+    ``` shell
+    ros2 launch vl53l5cx ranging.launch.py config_file:=two_sensors.yaml activate_on_configure:=true
+    ```
 
-1. Connect I2C wires and RST/LPn for each sensor.
-2. In your own config file, specify an arbitrary I2C address and the RST/LPn pin number (according to your connection) for each sensor.
-
-    **Note**
-    Use `gpiod` to check the GPIO pin availability.
+5. Stop ranging by triggering the *deactivate* transition.
 
     ```shell
-    sudo apt install gpiod
-    gpioinfo
+    ros2 lifecycle set /vl53l5cx deactivate
     ```
-
-3. Launch. See `launch/ranging.launch.py` for details.
-
-    ```shell
-    # Launch node using config/two_sensors.yaml
-    ros2 launch vl53l5cx ranging.launch.py config_file:='two_sensors.yaml'
-    ```
-
-4. Start/stop ranging as described in the previous section.
 
 ## Published Topics
 
@@ -93,17 +91,10 @@ See [Docker section](#docker).
 | `~/x[ADDRESS]/image`       | `sensor_msgs::msg::Image`      | Distance (metric float) |
 | `~/x[ADDRESS]/camera_info` | `sensor_msgs::msg::CameraInfo` | Camera info             |
 
-## Services
-
-| Name              | Type                      | Description   |
-| ----------------- | ------------------------- | ------------- |
-| `~/start_ranging` | `sensor_srvs::srv::Empty` | Start ranging |
-| `~/stop_ranging`  | `sensor_srvs::srv::Empty` | Stop ranging  |
-
 ## Parameters
 
 The parameters can be configured dynamically.
-If a parameter is changed while the node is running, the change is applied when ranging is restarted.
+If a parameter is changed in the *active* state, the change will be applied when ranging is restarted.
 
 See `src/vl53l5cx_params.yaml` for the parameter definitions and descriptions.
 
