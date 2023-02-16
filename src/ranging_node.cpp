@@ -17,8 +17,8 @@
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  const auto node = std::make_shared<vl53l5cx::VL53L5CXNode>();
-  rclcpp::spin(node);
+  const auto lc_node = std::make_shared<vl53l5cx::VL53L5CXNode>("vl53l5cx");
+  rclcpp::spin(lc_node->get_node_base_interface());
   rclcpp::shutdown();
   return 0;
 }

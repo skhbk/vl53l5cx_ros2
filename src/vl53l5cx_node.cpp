@@ -14,12 +14,15 @@
 
 #include "vl53l5cx/vl53l5cx_node.hpp"
 
-using std_srvs::srv::Empty;
-
 namespace vl53l5cx
 {
 
-VL53L5CXNode::VL53L5CXNode() : Node("vl53l5cx")
+using std_srvs::srv::Empty;
+using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
+
+VL53L5CXNode::~VL53L5CXNode() {}
+
+CallbackReturn VL53L5CXNode::on_configure(const rclcpp_lifecycle::State & /*previous_state*/)
 {
   param_listener_ = std::make_shared<ParamListener>(this->get_node_parameters_interface());
   params_ = param_listener_->get_params();
@@ -30,8 +33,6 @@ VL53L5CXNode::VL53L5CXNode() : Node("vl53l5cx")
     sensors_.emplace_back(std::make_shared<VL53L5CX>(config));
   }
 
-  this->initialize();
-
   if (!params_.int_pin.empty()) {
     RCLCPP_INFO(this->get_logger(), "INT enabled");
     ranging_helper_ = std::make_unique<DetectInterrupt>(*this, sensors_);
@@ -39,19 +40,35 @@ VL53L5CXNode::VL53L5CXNode() : Node("vl53l5cx")
     ranging_helper_ = std::make_unique<PollI2C>(*this, sensors_);
   }
 
+  this->initialize();
+
   // Create services
-  services_.emplace_back(this->create_service<Empty>(
-    "~/start_ranging",
-    [this](Empty::Request::SharedPtr, Empty::Response::SharedPtr) { this->start_ranging(); }));
-  services_.emplace_back(this->create_service<Empty>(
-    "~/stop_ranging",
-    [this](Empty::Request::SharedPtr, Empty::Response::SharedPtr) { this->stop_ranging(); }));
   services_.emplace_back(this->create_service<Empty>(
     "~/calibrate_xtalk",
     [this](Empty::Request::SharedPtr, Empty::Response::SharedPtr) { this->calibrate_xtalk(); }));
+
+  return CallbackReturn::SUCCESS;
 }
 
-VL53L5CXNode::~VL53L5CXNode() {}
+CallbackReturn VL53L5CXNode::on_cleanup(const rclcpp_lifecycle::State & /*previous_state*/)
+{
+  param_listener_.reset();
+  sensors_.clear();
+  ranging_helper_.reset();
+  services_.clear();
+
+  return CallbackReturn::SUCCESS;
+}
+
+CallbackReturn VL53L5CXNode::on_shutdown(const rclcpp_lifecycle::State & /*previous_state*/)
+{
+  param_listener_.reset();
+  sensors_.clear();
+  ranging_helper_.reset();
+  services_.clear();
+
+  return CallbackReturn::SUCCESS;
+}
 
 void VL53L5CXNode::initialize()
 {
@@ -162,13 +179,8 @@ std::vector<VL53L5CX::Config> VL53L5CXNode::parse_parameters(const Params & para
   return configs;
 }
 
-void VL53L5CXNode::start_ranging()
+CallbackReturn VL53L5CXNode::on_activate(const rclcpp_lifecycle::State & /*previous_state*/)
 {
-  if (sensors_[0]->is_ranging()) {
-    RCLCPP_INFO(this->get_logger(), "Already ranging");
-    return;
-  }
-
   this->apply_parameters();
 
   const int frequency = params_.frequency;
@@ -184,15 +196,12 @@ void VL53L5CXNode::start_ranging()
 
   // Start publishing ranging data
   ranging_helper_->start();
+
+  return CallbackReturn::SUCCESS;
 }
 
-void VL53L5CXNode::stop_ranging()
+CallbackReturn VL53L5CXNode::on_deactivate(const rclcpp_lifecycle::State & /*previous_state*/)
 {
-  if (!sensors_[0]->is_ranging()) {
-    RCLCPP_INFO(this->get_logger(), "Not in ranging");
-    return;
-  }
-
   // Stop publishing ranging data
   ranging_helper_->stop();
 
@@ -201,6 +210,8 @@ void VL53L5CXNode::stop_ranging()
   RCLCPP_INFO(this->get_logger(), "Stopped ranging");
 
   this->apply_parameters();
+
+  return CallbackReturn::SUCCESS;
 }
 
 void VL53L5CXNode::calibrate_xtalk()
