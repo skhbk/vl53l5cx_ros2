@@ -12,6 +12,7 @@
   <depend>generate_parameter_library</depend>
   <depend>libgpiod-dev</depend>
   <depend>rclcpp</depend>
+  <depend>rclcpp_components</depend>
   <depend>rclcpp_lifecycle</depend>
   <depend>sensor_msgs</depend>
   <depend>std_srvs</depend>

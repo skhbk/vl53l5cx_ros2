@@ -31,8 +31,13 @@ target_link_libraries(
   gpiod
 )
 
-ament_auto_add_executable(ranging_node src/ranging_node.cpp)
-target_link_libraries(ranging_node ${PROJECT_NAME})
+rclcpp_components_register_node(
+  ${PROJECT_NAME}
+  PLUGIN
+  "vl53l5cx::VL53L5CXNode"
+  EXECUTABLE
+  ranging
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

@@ -29,7 +29,7 @@ def launch_setup(context, *args, **kwargs):
 
     vl53l5cx_node = LifecycleNode(
         package="vl53l5cx",
-        executable="ranging_node",
+        executable="ranging",
         name="vl53l5cx",
         namespace="",
         parameters=[parameters],

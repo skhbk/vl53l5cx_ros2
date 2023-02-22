@@ -20,6 +20,10 @@ namespace vl53l5cx
 using std_srvs::srv::Empty;
 using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
 
+VL53L5CXNode::VL53L5CXNode(const rclcpp::NodeOptions & options) : LifecycleNode("vl53l5cx", options)
+{
+}
+
 VL53L5CXNode::~VL53L5CXNode() {}
 
 CallbackReturn VL53L5CXNode::on_configure(const rclcpp_lifecycle::State & /*previous_state*/)

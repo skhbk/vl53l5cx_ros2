@@ -42,6 +42,7 @@ class VL53L5CXNode : public rclcpp_lifecycle::LifecycleNode
 
 public:
   using LifecycleNode::LifecycleNode;
+  explicit VL53L5CXNode(const rclcpp::NodeOptions & options);
   ~VL53L5CXNode();
 
   CallbackReturn on_configure(const rclcpp_lifecycle::State & previous_state) override;
@@ -56,5 +57,8 @@ private:
   void calibrate_xtalk();
   static std::vector<VL53L5CX::Config> parse_parameters(const Params & params);
 };
+
+#include "rclcpp_components/register_node_macro.hpp"
+RCLCPP_COMPONENTS_REGISTER_NODE(vl53l5cx::VL53L5CXNode)
 
 }  // namespace vl53l5cx
