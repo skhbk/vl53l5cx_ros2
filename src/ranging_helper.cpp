@@ -73,8 +73,15 @@ CameraInfo RangingHelper::get_camera_info(const VL53L5CX::Config & config)
   msg.distortion_model = "plumb_bob";
   msg.d = {0, 0, 0, 0, 0};  // No distortion
 
-  const double c = (msg.width - 1) / 2.;               // Optical center
-  const double f = c / std::tan(45 * M_PI / 180 / 2);  // Focal length
+  double fov;
+  if (config.part_number == PartNumber::VL53L7CX) {
+    fov = 60;
+  } else {
+    fov = 45;
+  }
+
+  const double c = (msg.width - 1) / 2.;                // Optical center
+  const double f = c / std::tan(fov * M_PI / 180 / 2);  // Focal length
   msg.k = {f, 0, c, 0, f, c, 0, 0, 1};
   msg.p = {f, 0, c, 0, 0, f, c, 0, 0, 0, 1, 0};
   msg.r = {1, 0, 0, 0, 1, 0, 0, 0, 1};
