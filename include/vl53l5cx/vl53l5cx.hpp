@@ -29,6 +29,7 @@ class VL53L5CX
 public:
   struct Config
   {
+    PartNumber part_number;
     std::string frame_id;
     Address address;
     Resolution resolution;

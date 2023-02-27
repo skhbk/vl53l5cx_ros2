@@ -26,6 +26,7 @@ using IntegrationTime = uint16_t;
 using Pin = uint8_t;
 enum class Resolution { X4 = 4, X8 = 8 };
 enum class RangingMode { CONTINUOUS, AUTONOMOUS };
+enum class PartNumber { VL53L5CX, VL53L7CX };
 
 enum class RangingOutput { DISTANCE, TARGET_STATUS };
 
