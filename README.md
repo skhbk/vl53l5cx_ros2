@@ -1,6 +1,6 @@
 # VL53L5CX ROS 2 Driver for Linux
 
-This repository contains ROS 2 package for STM [VL53L5CX](https://www.st.com/en/imaging-and-photonics-solutions/vl53l5cx.html) ToF ranging sensor.
+This repository contains ROS 2 package for STM [VL53L5CX](https://www.st.com/en/imaging-and-photonics-solutions/vl53l5cx.html) and [VL53L7CX](https://www.st.com/en/imaging-and-photonics-solutions/vl53l7cx.html) ToF ranging sensor.
 
 Tested on Raspberry Pi 4 Model B.
 
