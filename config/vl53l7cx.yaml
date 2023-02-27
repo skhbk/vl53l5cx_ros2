@@ -1,0 +1,3 @@
+vl53l5cx:
+  ros__parameters:
+    part_number: vl53l7cx

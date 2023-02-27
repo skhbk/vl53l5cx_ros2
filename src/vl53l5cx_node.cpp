@@ -153,9 +153,17 @@ std::vector<VL53L5CX::Config> VL53L5CXNode::parse_parameters(const Params & para
     ranging_mode = RangingMode::AUTONOMOUS;
   }
 
+  PartNumber part_number;
+  if (params.part_number == "vl53l7cx") {
+    part_number = PartNumber::VL53L7CX;
+  } else {
+    part_number = PartNumber::VL53L5CX;
+  }
+
   std::vector<VL53L5CX::Config> configs(n_devices);
   for (size_t i = 0; i < n_devices; ++i) {
     auto & config = configs[i];
+    config.part_number = part_number;
     config.frame_id = params.frame_id[i];
     config.address = static_cast<Address>(params.address[i]);
     config.gpiochip = params.gpiochip;

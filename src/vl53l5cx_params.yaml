@@ -18,6 +18,15 @@ vl53l5cx:
       validation: { not_empty<>: [] },
     }
 
+  part_number:
+    {
+      type: string,
+      default_value: "vl53l5cx",
+      description: "Part number, affects camera info.",
+      read_only: true,
+      validation: { one_of<>: [["vl53l5cx", "vl53l7cx"]] },
+    }
+
   gpiochip:
     {
       type: string,
