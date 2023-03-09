@@ -166,6 +166,7 @@ std::vector<VL53L5CX::Config> VL53L5CXNode::parse_parameters(const Params & para
     config.part_number = part_number;
     config.frame_id = params.frame_id[i];
     config.address = static_cast<Address>(params.address[i]);
+    config.i2c_bus = params.i2c_bus;
     config.gpiochip = params.gpiochip;
     if (!params.rst_pin.empty()) {
       config.rst_pin = params.rst_pin[i];

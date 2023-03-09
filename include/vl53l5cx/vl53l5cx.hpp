@@ -37,6 +37,7 @@ public:
     RangingMode ranging_mode;
     IntegrationTime integration_time;
     bool filter_outputs;
+    std::string i2c_bus;
     std::string gpiochip;
     std::optional<Pin> rst_pin;
     std::optional<Pin> lpn_pin;
