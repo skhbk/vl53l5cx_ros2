@@ -38,7 +38,7 @@ colcon build
 ### I2C and GPIO Permissions
 
 This package requires I2C and GPIO (if you use RST, LPn or INT pin) access.
-Make sure the user has privileges for `/dev/i2c-1` and `/dev/gpiochip*`.
+Make sure the user has privileges for `/dev/i2c-*` and `/dev/gpiochip*`.
 
 These permissions can be easily handled by using a Docker container.
 See [Docker section](#docker).
