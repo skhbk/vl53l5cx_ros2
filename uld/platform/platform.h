@@ -85,6 +85,8 @@ typedef struct
   /* For Linux implementation, file descriptor */
   int fd;
 
+  const char * i2c_device;
+
 } VL53L5CX_Platform;
 
 /*

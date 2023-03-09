@@ -132,6 +132,7 @@ void VL53L5CX::initialize()
 
   if (RST || LPn) this->reset();
 
+  device_->platform()->i2c_device = ("/dev/" + config_.i2c_bus).c_str();
   status |= vl53l5cx_comms_init(device_->platform());
   if (status) throw CommsError("Failed to initialize I2C");
 

@@ -27,6 +27,14 @@ vl53l5cx:
       validation: { one_of<>: [["vl53l5cx", "vl53l7cx"]] },
     }
 
+  i2c_bus: 
+    {
+      type: string,
+      default_value: "i2c-1",
+      description: "Name of I2C bus.",
+      read_only: true,
+    }
+
   gpiochip:
     {
       type: string,
