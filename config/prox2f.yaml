@@ -1,0 +1,13 @@
+/vl53l5cx:
+  ros__parameters:
+    frame_id: [left_proximity, right_proximity]
+    address: [0x2a, 0x2b]
+    part_number: vl53l7cx
+    rst_pin: [146, 91]
+    # int_pin: [147, 92]
+    i2c_bus: i2c-0
+    gpiochip: gpiochip0
+    frequency: 30
+    resolution: 8
+    integration_time: 1
+    filter_outputs: true
