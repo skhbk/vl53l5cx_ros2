@@ -76,7 +76,7 @@
 
 #define SUPPRESS_UNUSED_WARNING(x) ((void)(x))
 
-#define VL53L5CX_COMMS_CHUNK_SIZE 1024
+#define VL53L5CX_COMMS_CHUNK_SIZE 61
 
 #define ST_TOF_IOCTL_TRANSFER _IOWR('a', 0x1, void *)
 
