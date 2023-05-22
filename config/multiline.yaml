@@ -1,0 +1,11 @@
+/vl53l5cx:
+  ros__parameters:
+    nodes: [vl53l5cx_0, vl53l5cx_1]
+
+/vl53l5cx_0:
+  ros__parameters:
+    i2c_bus: i2c-0
+    
+/vl53l5cx_1:
+  ros__parameters:
+    i2c_bus: i2c-1
