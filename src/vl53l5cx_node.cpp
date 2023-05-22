@@ -192,19 +192,12 @@ CallbackReturn VL53L5CXNode::on_activate(const rclcpp_lifecycle::State & /*previ
 {
   this->apply_parameters();
 
-  const int frequency = params_.frequency;
-  const std::chrono::milliseconds delay(static_cast<int64_t>(1e3 / frequency / sensors_.size()));
-
-  // Delay the start of ranging for each sensor
-  for (auto & e : sensors_) {
-    rclcpp::sleep_for(delay);
-    e->start_ranging();
-  }
-
-  RCLCPP_INFO(this->get_logger(), "Start ranging");
+  for (auto & e : sensors_) e->start_ranging();
 
   // Start publishing ranging data
   ranging_helper_->start();
+
+  RCLCPP_INFO(this->get_logger(), "Start ranging");
 
   return CallbackReturn::SUCCESS;
 }
