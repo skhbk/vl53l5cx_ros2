@@ -14,6 +14,7 @@ ament_auto_find_build_dependencies()
 add_subdirectory(uld)
 
 generate_parameter_library(vl53l5cx_params src/vl53l5cx_params.yaml)
+generate_parameter_library(multiline_params src/multiline_params.yaml)
 
 ament_auto_add_library(
   ${PROJECT_NAME}
@@ -33,6 +34,9 @@ target_link_libraries(
 
 ament_auto_add_executable(ranging_node src/ranging_node.cpp)
 target_link_libraries(ranging_node ${PROJECT_NAME})
+
+ament_auto_add_executable(multiline_node src/multiline_node.cpp)
+target_link_libraries(multiline_node ${PROJECT_NAME} multiline_params)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
