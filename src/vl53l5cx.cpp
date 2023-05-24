@@ -165,6 +165,7 @@ void VL53L5CX::set_config(const Config & config)
   config_.frequency = config.frequency;
   config_.ranging_mode = config.ranging_mode;
   config_.integration_time = config.integration_time;
+  config_.sharpener = config.sharpener;
   config_.xtalk_data = config.xtalk_data;
 
   // Resolution
@@ -197,6 +198,11 @@ void VL53L5CX::set_config(const Config & config)
       break;
     default:
       assert(false);
+  }
+
+  // Sharpener
+  if (vl53l5cx_set_sharpener_percent(device_->config(), config_.sharpener)) {
+    throw DeviceError("Failed to set sharpener", config_.address);
   }
 
   if (!config_.xtalk_data.empty()) {

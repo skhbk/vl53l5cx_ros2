@@ -36,6 +36,7 @@ public:
     Frequency frequency;
     RangingMode ranging_mode;
     IntegrationTime integration_time;
+    Sharpener sharpener;
     bool filter_outputs;
     std::string i2c_bus;
     std::string gpiochip;

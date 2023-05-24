@@ -23,6 +23,7 @@ namespace vl53l5cx
 using Address = uint8_t;
 using Frequency = uint8_t;
 using IntegrationTime = uint16_t;
+using Sharpener = uint8_t;
 using Pin = uint8_t;
 enum class Resolution { X4 = 4, X8 = 8 };
 enum class RangingMode { CONTINUOUS, AUTONOMOUS };

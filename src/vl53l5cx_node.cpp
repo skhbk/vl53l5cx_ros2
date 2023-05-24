@@ -181,6 +181,7 @@ std::vector<VL53L5CX::Config> VL53L5CXNode::parse_parameters(const Params & para
     config.frequency = static_cast<Frequency>(params.frequency);
     config.ranging_mode = ranging_mode;
     config.integration_time = static_cast<IntegrationTime>(params.integration_time);
+    config.sharpener = static_cast<Sharpener>(params.sharpener);
     config.filter_outputs = params.filter_outputs;
     config.xtalk_data = params.xtalk_data;
   }
