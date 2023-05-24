@@ -37,7 +37,7 @@ public:
     RangingMode ranging_mode;
     IntegrationTime integration_time;
     Sharpener sharpener;
-    bool filter_outputs;
+    std::vector<TargetStatus> valid_status;
     std::string i2c_bus;
     std::string gpiochip;
     std::optional<Pin> rst_pin;
@@ -53,7 +53,7 @@ public:
 
     static bool is_available(RangingOutput output);
     void resize(Resolution resolution);
-    void filter_outputs();
+    void replace_with_nan(const std::vector<TargetStatus> & valid_status);
   };
 
 private:
