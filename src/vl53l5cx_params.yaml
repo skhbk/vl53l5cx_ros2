@@ -85,6 +85,13 @@ vl53l5cx:
       validation: { bounds<>: [1, 1000] },
     }
 
+  sharpener: {
+    type: int,
+    default_value: 5,
+    description: "Sharpener value in percent.",
+    validation: { bounds<>: [0, 99] },
+  }
+
   filter_outputs:
     {
       type: bool,
