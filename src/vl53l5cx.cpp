@@ -161,12 +161,7 @@ void VL53L5CX::set_config(const Config & config)
   if (!this->is_initialized()) throw std::runtime_error("Initialize first");
   if (this->is_ranging()) throw std::runtime_error("Stop ranging before applying parameters");
 
-  config_.resolution = config.resolution;
-  config_.frequency = config.frequency;
-  config_.ranging_mode = config.ranging_mode;
-  config_.integration_time = config.integration_time;
-  config_.sharpener = config.sharpener;
-  config_.xtalk_data = config.xtalk_data;
+  config_ = config;
 
   // Resolution
   const auto resolution = static_cast<uint8_t>(config_.resolution);
