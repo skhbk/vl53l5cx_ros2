@@ -12,6 +12,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
+#include <algorithm>  // std::any_of
 #include <cassert>
 #include <chrono>    // std::chrono_literals
 #include <cmath>     // NAN
@@ -76,18 +77,23 @@ void VL53L5CX::RangingResults::resize(Resolution resolution)
   }
 }
 
-void VL53L5CX::RangingResults::filter_outputs()
+void VL53L5CX::RangingResults::replace_with_nan(const std::vector<TargetStatus> & valid_status)
 {
   if (!this->is_available(RangingOutput::TARGET_STATUS)) {
-    throw std::invalid_argument(
-      "Outputs filtering is available only when target-status-output is enabled");
+    throw std::invalid_argument("Target status output is required");
+  }
+
+  if (!this->is_available(RangingOutput::DISTANCE)) {
+    return;
   }
 
   for (std::size_t i = 0; i < target_status.size(); ++i) {
-    if (target_status.at(i) != 5 && target_status.at(i) != 9) {
-      if (this->is_available(RangingOutput::DISTANCE)) {
-        distance.at(i) = NAN;
-      }
+    const bool is_valid = std::any_of(
+      valid_status.begin(), valid_status.end(),
+      [&](TargetStatus x) { return x == target_status.at(i); });
+
+    if (!is_valid) {
+      distance.at(i) = NAN;
     }
   }
 }
@@ -161,12 +167,7 @@ void VL53L5CX::set_config(const Config & config)
   if (!this->is_initialized()) throw std::runtime_error("Initialize first");
   if (this->is_ranging()) throw std::runtime_error("Stop ranging before applying parameters");
 
-  config_.resolution = config.resolution;
-  config_.frequency = config.frequency;
-  config_.ranging_mode = config.ranging_mode;
-  config_.integration_time = config.integration_time;
-  config_.sharpener = config.sharpener;
-  config_.xtalk_data = config.xtalk_data;
+  config_ = config;
 
   // Resolution
   const auto resolution = static_cast<uint8_t>(config_.resolution);
@@ -313,7 +314,9 @@ void VL53L5CX::get_ranging_data()
       results_.target_status.at(i) = device_->results()->target_status[i];
     }
 
-    if (config_.filter_outputs) results_.filter_outputs();
+    if (!config_.valid_status.empty()) {
+      results_.replace_with_nan(config_.valid_status);
+    }
   }
 }
 

@@ -92,12 +92,11 @@ vl53l5cx:
     validation: { bounds<>: [0, 99] },
   }
 
-  filter_outputs:
-    {
-      type: bool,
-      default_value: false,
-      description: "Set distance values with invalid ranging status to NaN.",
-    }
+  valid_status: {
+    type: int_array,
+    default_value: [],
+    description: "If not empty, replace distance value in the invalid status zone with NaN.",
+  }
 
   calibration:
     reflectance:

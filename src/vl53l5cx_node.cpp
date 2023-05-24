@@ -182,7 +182,9 @@ std::vector<VL53L5CX::Config> VL53L5CXNode::parse_parameters(const Params & para
     config.ranging_mode = ranging_mode;
     config.integration_time = static_cast<IntegrationTime>(params.integration_time);
     config.sharpener = static_cast<Sharpener>(params.sharpener);
-    config.filter_outputs = params.filter_outputs;
+    for (const auto & e : params.valid_status) {
+      config.valid_status.push_back(static_cast<TargetStatus>(e));
+    }
     config.xtalk_data = params.xtalk_data;
   }
 
