@@ -164,6 +164,7 @@ void VL53L5CX::set_config(const Config & config)
   config_.resolution = config.resolution;
   config_.frequency = config.frequency;
   config_.ranging_mode = config.ranging_mode;
+  config_.integration_time = config.integration_time;
   config_.xtalk_data = config.xtalk_data;
 
   // Resolution
