@@ -1,0 +1,22 @@
+/vl53l5cx:
+  ros__parameters:
+    nodes: [vl53l5cx_left, vl53l5cx_right]
+
+/vl53l5cx_left:
+  ros__parameters:
+    frame_id: [left_proximity]
+    part_number: vl53l7cx
+    i2c_bus: i2c-0
+    frequency: 15
+    resolution: 8
+    valid_status: [5, 6, 9]
+
+    
+/vl53l5cx_right:
+  ros__parameters:
+    frame_id: [right_proximity]
+    part_number: vl53l7cx
+    i2c_bus: i2c-5
+    frequency: 15
+    resolution: 8
+    valid_status: [5, 6, 9]
